@@ -28,22 +28,22 @@ var initMap = function () {
 
         }
     }).addTo(mymap);
-    var tianjin = L.divIcon({className:'glyphicon glyphicon-plane aircolor'})
-    var markerTianjin = L.marker(([39.124444,117.346667]),{
-        icon: tianjin,
-        title:'天津滨海国际机场'
-    }).addTo(mymap)
+    // var tianjin = L.divIcon({className:'glyphicon glyphicon-plane aircolor'})
+    // var markerTianjin = L.marker(([39.124444,117.346667]),{
+    //     icon: tianjin,
+    //     title:'天津滨海国际机场'
+    // }).addTo(mymap)
     // L.popup().setLatLng([39.124444,117.346667]).setContent('天津机场popover');
-    markerTianjin.bindTooltip('天津机场',{permanent: true}).openTooltip();
+    // markerTianjin.bindTooltip('天津机场',{permanent: true}).openTooltip();
 
 
-    var beijing = L.divIcon({className:'glyphicon glyphicon-plane aircolor'})
-    var markerSJZ = L.marker(([40.268, 116.708]),{
-        icon: beijing,
-        title:'北京国际机场'
-    }).addTo(mymap)
-    // L.popup().setLatLng([38.268513071097836,114.70886812756136]).setContent('石家庄正定机场popover').openOn(mymap);
-    markerSJZ.bindTooltip('北京国际机场',{permanent: true}).openTooltip();
+    // var beijing = L.divIcon({className:'glyphicon glyphicon-plane aircolor'})
+    // var markerSJZ = L.marker(([40.268, 116.708]),{
+    //     icon: beijing,
+    //     title:'北京国际机场'
+    // }).addTo(mymap)
+    // // L.popup().setLatLng([38.268513071097836,114.70886812756136]).setContent('石家庄正定机场popover').openOn(mymap);
+    // markerSJZ.bindTooltip('北京国际机场',{permanent: true}).openTooltip();
 
     //扇区
     var sectorMapWithName = L.geoJSON(sector, {
@@ -111,23 +111,31 @@ var initMap = function () {
     //         layer.bindTooltip(title, opt)
     //     }
     // })
+    //机场点
+    var airpointMap = L.geoJSON(airpoint, {
+        pointToLayer:function(geoJsonPoint, latlng){
+            console.log(latlng);
+            var tianjin = L.divIcon({className:'glyphicon glyphicon-plane aircolor'})
+            return L.marker([latlng.lat,latlng.lng],{
+                icon: tianjin,
 
-    // var airpointMap = L.geoJSON(airpoint, {
-    //     style: function(feature) {
-    //         var obj = {
-    //             color:'#32adcc',
-    //             fillColor:'transparent',
-    //             weight:1
-    //         }
-    //         return obj
-    //     },
-    //     onEachFeature: function(feature, layer){
-    //         var title = feature.properties.name
-    //         var opt = {permanent: true}
-    //         layer.bindTooltip(title, opt)
-    //     }
-    // })
-    // airpointMap.addTo(mymap)
+            })
+        },
+        style: function(feature) {
+            var obj = {
+                color:'#32adcc',
+                fillColor:'transparent',
+                weight:1
+            }
+            return obj
+        },
+        onEachFeature: function(feature, layer){
+            var title = feature.properties.name
+            var opt = {permanent: true}
+            layer.bindTooltip(title, opt)
+        }
+    })
+    airpointMap.addTo(mymap)
     mymap.setView([40,100],5)
     var airportImg = {};
     mymap.on('zoomend',function () {
@@ -143,7 +151,7 @@ var initMap = function () {
         }
         if(zoomIndex*1 == 10){
             var url = "http://192.168.243.67:8080/img/beijingAirport/airport.png";
-                imageBounds = [[40.268-zoomIndex*.01, 116.608-zoomIndex*.009], [40.268+zoomIndex*.01, 116.608+zoomIndex*.009]];
+                imageBounds = [[40.07222222222222-zoomIndex*.01, 116.59722222222221-zoomIndex*.009], [40.07222222222222+zoomIndex*.01, 116.59722222222221+zoomIndex*.009]];
                 airportImg = L.imageOverlay(url, imageBounds).addTo(mymap);
             }else if(zoomIndex*1<=10){
                 airportImg.remove()
@@ -157,7 +165,7 @@ var initMap = function () {
         '扇区':sectorMapWithName,
         '跑道':runwayMap,
         // '哈哈':accMap,
-        // '机场点':airpointMap
+        '机场点':airpointMap
     }
     //初始化图层
     // mymap.layer = [cnMap]
