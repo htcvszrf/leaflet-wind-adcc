@@ -7,47 +7,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="plugins/leaflet/leaflet.css">
+    <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.css">
     <style>
-        #main{
+        #main {
             width: 1800px;
             height: 900px;
             margin: auto;
             background: #162a3e;
         }
-        .beijing{
-            width: 2px;
-            height: 2px;
-            background-color: rebeccapurple;
-            border-radius: 50% !important;
+        .aircolor {
+            color: springgreen;
         }
-        .tianjin{
-            width: 2px;
-            height: 2px;
-            background-color: aquamarine;
-            border-radius: 50% !important;
-        }
-        .leaflet-tooltip{
+
+        .leaflet-tooltip {
             color: #fff;
             background-color: transparent;
             box-shadow: none;
             border: none;
         }
-        .leaflet-tooltip:before{
+
+        .leaflet-tooltip:before {
             border-color: transparent;
         }
 
+        .runway {
+            z-index: 10;
+        }
     </style>
 </head>
 
 <body>
     <div id="main"></div>
     <script src="plugins/jquery/jquery.min.js"></script>
+    <script src="plugins/bootstrap/js/bootstrap.js"></script>
     <script src="plugins/leaflet/leaflet-src.js"></script>
     <script src="plugins/leaflet/leaflet.label-src.js"></script>
     <script src="data/china.js"></script>
     <script src="data/data-bus.js"></script>
     <script src="data/border3D.js"></script>
     <script src="data/sector.js"></script>
+    <script src="data/runway.js"></script>
+    <script src="data/acc.js"></script>
+    <script src="data/airport-point.js"></script>
+    <script src="data/bjAirport.js"></script>
     <script src="data/border4D.js"></script>
     <script src="js/basic-map.js"></script>
 </body>
