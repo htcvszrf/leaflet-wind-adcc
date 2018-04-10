@@ -29,10 +29,10 @@ var initMap = function () {
         }
     }).addTo(mymap);
     // var tianjin = L.divIcon({className:'glyphicon glyphicon-plane aircolor'})
-    // var markerTianjin = L.marker(([39.124444,117.346667]),{
-    //     icon: tianjin,
-    //     title:'天津滨海国际机场'
-    // }).addTo(mymap)
+    var markerTianjin = L.marker(([40.07222222222222, 116.59722222222221]),{
+        // icon: tianjin,
+        title:'11111111111'
+    }).addTo(mymap)
     // L.popup().setLatLng([39.124444,117.346667]).setContent('天津机场popover');
     // markerTianjin.bindTooltip('天津机场',{permanent: true}).openTooltip();
 
@@ -112,13 +112,19 @@ var initMap = function () {
     //     }
     // })
     //机场点
+    var airportIcon = L.icon({
+        iconUrl: 'img/airport.png',
+        iconSize: [18, 18],
+    })
+
+
     var airpointMap = L.geoJSON(airpoint, {
         pointToLayer:function(geoJsonPoint, latlng){
             console.log(latlng);
             var tianjin = L.divIcon({className:'glyphicon glyphicon-plane aircolor'})
-            return L.marker([latlng.lat,latlng.lng],{
-                icon: tianjin,
-
+            return L.marker(latlng,{
+                icon: airportIcon,
+                // title:'11111111111'
             })
         },
         style: function(feature) {
