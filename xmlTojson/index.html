@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script src="node_modules/xmltojson/lib/xmlToJSON.js"></script>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
+<script src="FileSaver.js-master/src/FileSaver.js"></script>
+<script src="json/airport.js"></script>
+<script>
+
+    console.log(airport);
+    Array.prototype.distinct = function () {
+        var arr = this,
+            i,
+            obj = {},
+            result = [],
+            len = arr.length;
+        for (i = 0; i < arr.length; i++) {
+            if (!obj[arr[i]]) { //如果能查找到，证明数组元素重复了
+                obj[arr[i]] = 1;
+                result.push(arr[i]);
+            }
+        }
+        return result;
+    };
+
+    function insert_flg(str, flg, sn) {
+        var newstr = "";
+        var aa = str.substring(0, sn);
+        newstr = aa + flg + str.substring(sn, str.length)
+        return newstr;
+    }
+    var features = [];
+    //扇区
+//    $.each(sector.sectors.sector, function (i, e) {
+//        var obj = {};
+//        obj['type'] = 'Feature';
+//        obj['properties'] = {};
+//        obj['properties']['name'] = e.cnName;
+//        obj['properties']['sub-name'] = e.verticalScope?e.verticalScope:"";
+//        obj['geometry'] = {};
+//        obj['geometry']['type'] = "Polygon";
+//        var arr = [];
+//        $.each(JSON.parse(e.geographic), function (j, k) {
+//            var a = k[0].split(',')
+//            var latDegree  = parseInt(a[0].substring(0,2));
+//            var latMinute  = parseInt(a[0].substring(2,4));
+//            var latSecond  = parseInt(a[0].substring(4));
+//            var lonDegree  = parseInt(a[1].substring(0,3));
+//            var lonMinute   = parseInt(a[1].substring(3,5));
+//            var lonSecond   = parseInt(a[1].substring(5));
+//            var  lat = latDegree + latMinute/60 + latSecond/3600;
+//            var lon = lonDegree +lonMinute/60 + lonSecond/3600;
+//            lat = lat*1;
+//            lon = lon*1;
+//            var lonarr = [lon,lat]
+//            arr.push(lonarr);
+//        })
+//        obj['geometry']['coordinates'] = [arr];
+//        features.push(obj);
+//    })
+//跑道
+//     $.each(runway.runways.runway, function (i, e) {
+//         var obj = {};
+//         obj['type'] = 'Feature';
+//         obj['properties'] = {};
+//         obj['properties']['name'] = e.cnName[0];
+//         obj['geometry'] = {};
+//         obj['geometry']['type'] = "Polygon";
+//         var arr = [];
+//         $.each(JSON.parse(e.geographic[0]), function (j, k) {
+//             var a = k.split(',')
+//             var parama = a[0];
+//             a[0] = a[1] *1;
+//             a[1] = parama*-1 ;
+//             arr.push(a)
+//         })
+//         obj['geometry']['coordinates'] = [arr.distinct()];
+//         features.push(obj);
+//     })
+    // console.log(features);
+//     $.each(china.chinaBorders.chinaBorder, function (i, e) {
+//         var obj = {};
+//         obj['type'] = 'Feature';
+//         obj['properties'] = {};
+//         obj['properties']['name'] = e.cnName[0];
+//         obj['geometry'] = {};
+//         obj['geometry']['type'] = "Polygon";
+//         // console.log(JSON.parse(e.geographic[0]))
+//         var dataArr = JSON.parse(e.geographic[0])
+//         // console.log(dataArr);
+//         var newArr = [];
+//         $.each(dataArr,function(j,k){
+//             var sarr = k.split(',');
+//             var param = sarr[0]*-1
+//             sarr[0] = sarr[1]*1
+//             sarr[1] = param
+//             newArr.push(sarr)
+//         })
+//         // $.each()
+//         obj['geometry']['coordinates'] = [newArr];
+//         features.push(obj);
+//    })
+
+// $.each(acc.accs.acc, function (i, e) {
+//         var obj = {};
+//         obj['type'] = 'Feature';
+//         obj['properties'] = {};
+//         obj['properties']['name'] = e.cnName[0];
+//         obj['geometry'] = {};
+//         obj['geometry']['type'] = "Polygon";
+//         var arr = [];
+//         $.each(JSON.parse(e.geographic[0]), function (j, k) {
+//             var a = k[0].split(',')
+//             var parama = a[0];
+//             a[0] = insert_flg(a[1], '.', 3)*1;
+//             a[1] = insert_flg(parama, '.', 2)*1 ;
+//             arr.push(a)
+//             var b = k[1].split(',')
+//             var paramb = b[0];
+//             b[0] = insert_flg(b[1], '.', 3)*1 ;
+//             b[1] = insert_flg(paramb, '.', 2)*1 ;
+//             arr.push(b)
+//         })
+//         obj['geometry']['coordinates'] = [arr.distinct()];
+//         features.push(obj);
+//     })
+
+//机场点
+  $.each(airport.airports.airport, function (i, e) {
+         var obj = {};
+         obj['type'] = 'Feature';
+         obj['properties'] = {};
+         obj['properties']['name'] = e.name[0];
+         obj['properties']['identifier'] = e.identifier[0];
+         obj['properties']['type'] = e.type[0];
+         obj['geometry'] = {};
+         obj['geometry']['type'] = "Point";
+         var arr = [];
+         if(e['latitude'][0].length<6){
+             var num = 6 - e['latitude'][0].length*1;
+             for (var i = 0;i<num;i++){
+                 e['latitude'][0] = e['latitude'][0] + '0';
+             }
+            console.log(e['latitude'][0])
+         }
+
+         if(e['longitude'][0].length<7){
+             var num = 6 - e['longitude'][0].length*1;
+             for (var i = 0;i<num;i++){
+                 e['longitude'][0] = e['longitude'][0] + '0';
+             }
+            console.log(e['longitude'][0])
+         }
+      var latDegree  = parseInt(e['latitude'][0].substring(0,2));
+            var latMinute  = parseInt(e['latitude'][0].substring(2,4));
+            var latSecond  = parseInt(e['latitude'][0].substring(4));
+            var lonDegree  = parseInt(e['longitude'][0].substring(0,3));
+            var lonMinute   = parseInt(e['longitude'][0].substring(3,5));
+            var lonSecond   = parseInt(e['longitude'][0].substring(5));
+            var  lat = latDegree + latMinute/60 + latSecond/3600;
+            var lon = lonDegree +lonMinute/60 + lonSecond/3600;
+            lat = lat * 1;
+            lon = lon * 1;
+            var lonarr = [lon,lat]
+          obj['geometry']['coordinates'] = lonarr;
+          features.push(obj);
+     })
+
+//appsector
+ // $.each(airport.airports.airport, function (i, e) {
+ //        var obj = {};
+ //        obj['type'] = 'Feature';
+ //        obj['properties'] = {};
+ //        obj['properties']['name'] = e.name[0];
+ //        obj['properties']['identifier'] = e.identifier[0];
+ //        obj['properties']['type'] = e.type[0];
+ //        obj['geometry'] = {};
+ //        obj['geometry']['type'] = "Point";
+ //        var arr = [];
+ //        arr[0] = insert_flg(e.longitude[0], '.', 3)*1,
+ //        arr[1] = insert_flg(e.latitude[0], '.', 2)*1,
+ //         obj['geometry']['coordinates'] = arr;
+ //         features.push(obj);
+ //    })
+
+
+
+
+
+    console.log(features);
+    var mapObj = {
+        "type": "FeatureCollection",
+        "features":features
+    }
+    console.log(mapObj);
+
+    function downloadJson(data) {
+        var blob = new Blob([JSON.stringify(data)], {
+            type: ""
+        });
+        saveAs(blob, "airport-point.js");
+
+    }
+     // downloadJson(mapObj);
+</script>
+
+</html>
