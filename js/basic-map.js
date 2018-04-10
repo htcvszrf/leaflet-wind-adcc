@@ -56,15 +56,15 @@ var initMap = function () {
             return obj
         },
         onEachFeature: function(feature, layer){
-            var title = feature.properties.name + " "
+            var title = feature.properties.name + " "+ feature.properties["sub-name"]
             var opt = {permanent: true}
 
-            // if( feature.properties["sub-name"].indexOf('以上') > -1){
-            //     opt.offset = L.point(0,-20)
-            // }
-            // if( feature.properties["sub-name"].indexOf('以下') > -1){
-            //     opt.offset = L.point(0,20)
-            // }
+            if( feature.properties["sub-name"].indexOf('以上') > -1){
+                opt.offset = L.point(0,-20)
+            }
+            if( feature.properties["sub-name"].indexOf('以下') > -1){
+                opt.offset = L.point(0,20)
+            }
 
             layer.bindTooltip(title, opt)
         }
