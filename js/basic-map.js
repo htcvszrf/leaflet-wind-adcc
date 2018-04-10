@@ -165,6 +165,18 @@ var initMap = function () {
         console.log(zoomIndex)
     })
 
+    //风向图层
+    var velocityLayer = L.velocityLayer({
+        displayValues: true,
+        displayOptions: {
+            velocityType: 'GBR Wind',
+            displayPosition: 'bottomleft',
+            displayEmptyString: 'No wind data'
+        },
+        data: wind,
+        maxVelocity: 5
+    });
+
     //定义图层
     var baseMapLaysers = {
         '底图':cnMap,
@@ -178,5 +190,5 @@ var initMap = function () {
     //添加图层控制
     var layerControl = L.control.layers(baseMapLaysers);
     layerControl.addTo(mymap);
-    
+    layerControl.addOverlay(velocityLayer, 'Wind - Great Barrier Reef');
 }();
