@@ -33,6 +33,58 @@ var initMap = function () {
 
         }
     }).addTo(mymap);
+
+    var controlMapsFunc = function(){
+        var zoomIndex = mymap.getZoom();
+        console.log(zoomIndex);
+        if (zoomIndex * 1 >= 7) {
+            //显示扇区文字
+            if (mymap.hasLayer(secMap)) {
+                secMap.eachLayer(function (layer) {
+                    layer.openTooltip();
+                })
+            }
+            //显示机场点文字
+            if (mymap.hasLayer(airpointMap)) {
+                airpointMap.eachLayer(function (layer) {
+                    layer.openTooltip();
+                })
+            }
+            //显示跑道文字
+            if (mymap.hasLayer(runwayMap)) {
+                runwayMap.eachLayer(function (layer) {
+                    layer.openTooltip();
+                })
+            }
+        } else if (zoomIndex * 1 < 7) {
+            // 隐藏扇区文字
+            if (mymap.hasLayer(secMap)) {
+                secMap.eachLayer(function (layer) {
+                    layer.closeTooltip();
+                })
+            }
+            //隐藏机场文字
+            if (mymap.hasLayer(airpointMap)) {
+                airpointMap.eachLayer(function (layer) {
+                    layer.closeTooltip();
+                })
+            }
+            //隐藏跑道文字
+            if (mymap.hasLayer(runwayMap)) {
+                runwayMap.eachLayer(function (layer) {
+                    layer.closeTooltip();
+                })
+            }
+        }
+        if (zoomIndex * 1 == 10) {
+            var url = "http://192.168.243.67:8080/img/beijingAirport/airport.png";
+            imageBounds = [
+                [40.07222222222222 - zoomIndex * .01, 116.59722222222221 - zoomIndex * .009],
+                [40.07222222222222 + zoomIndex * .01, 116.59722222222221 + zoomIndex * .009]
+            ];
+            airportImg = L.imageOverlay(url, imageBounds).addTo(mymap);
+        }
+    }
     //扇区
     var secMap = L.geoJSON(sector, {
         style: function (feature) {
@@ -57,6 +109,8 @@ var initMap = function () {
             layer.bindTooltip(title, opt);
             layer.closeTooltip();
         }
+    }).on('add',function(){
+        controlMapsFunc()
     })
     //跑道
     var runwayMap = L.geoJSON(runway, {
@@ -76,6 +130,8 @@ var initMap = function () {
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
         }
+    }).on('add',function(){
+        controlMapsFunc()
     })
 
     // 机场图标
@@ -108,6 +164,8 @@ var initMap = function () {
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
         }
+    }).on('add',function(){
+        controlMapsFunc()
     })
     //设置地图中心视角
     mymap.setView([40, 100], 5)
@@ -115,60 +173,11 @@ var initMap = function () {
     // 北京机场底图
     var airportImg = {};
 
+
+
     //放大缩小控制器
-    mymap.on('zoomend', function () {
-        var zoomIndex = mymap.getZoom();
-        console.log(zoomIndex);
-        if (zoomIndex * 1 >= 7) {
-            //显示扇区文字
-            if (mymap.hasLayer(secMap)) {
-                    secMap.eachLayer(function (layer) {
-                        layer.openTooltip();
-                    })
-            }
-            //显示机场点文字
-            if (mymap.hasLayer(airpointMap)) {
-                airpointMap.eachLayer(function (layer) {
-                    layer.openTooltip();
-                })
-            }
-            //显示跑道文字
-            if (mymap.hasLayer(runwayMap)) {
-                runwayMap.eachLayer(function (layer) {
-                    layer.openTooltip();
-                })
-            }
-        } else if (zoomIndex * 1 < 7) {
-            // 隐藏扇区文字
-            if (mymap.hasLayer(secMap)) {
-                    secMap.eachLayer(function (layer) {
-                        layer.closeTooltip();
-                    })
-            }
-            //隐藏机场文字
-            if (mymap.hasLayer(airpointMap)) {
-                airpointMap.eachLayer(function (layer) {
-                    layer.closeTooltip();
-                })
-            }
-            //隐藏跑道文字
-            if (mymap.hasLayer(runwayMap)) {
-                runwayMap.eachLayer(function (layer) {
-                    layer.closeTooltip();
-                })
-            }
-        }
-        if (zoomIndex * 1 == 10) {
-            var url = "http://192.168.243.67:8080/img/beijingAirport/airport.png";
-            imageBounds = [
-                [40.07222222222222 - zoomIndex * .01, 116.59722222222221 - zoomIndex * .009],
-                [40.07222222222222 + zoomIndex * .01, 116.59722222222221 + zoomIndex * .009]
-            ];
-            airportImg = L.imageOverlay(url, imageBounds).addTo(mymap);
-        }
+    mymap.on('zoomend', controlMapsFunc)
 
-
-    })
 
     //风向图层
     var velocityLayer = L.velocityLayer({
@@ -193,4 +202,7 @@ var initMap = function () {
     layerControl.addOverlay(runwayMap,'跑道');
     layerControl.addOverlay(airpointMap,'机场点');
     layerControl.addOverlay(velocityLayer,'风向图');
+
+
+
 }();
