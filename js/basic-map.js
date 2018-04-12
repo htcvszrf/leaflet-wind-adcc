@@ -34,7 +34,7 @@ var initMap = function () {
         }
     }).addTo(mymap);
 
-    var controlMapsFunc = function(){
+    var controlMapsFunc = function () {
         var zoomIndex = mymap.getZoom();
         console.log(zoomIndex);
         if (zoomIndex * 1 >= 7) {
@@ -109,7 +109,7 @@ var initMap = function () {
             layer.bindTooltip(title, opt);
             layer.closeTooltip();
         }
-    }).on('add',function(){
+    }).on('add', function () {
         controlMapsFunc()
     })
     //跑道
@@ -130,7 +130,117 @@ var initMap = function () {
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
         }
-    }).on('add',function(){
+    }).on('add', function () {
+        controlMapsFunc()
+    })
+
+    //航路
+    var airwayMap = L.geoJSON(airway, {
+        style: function (feature) {
+            var obj = {
+                color: '#32adcc',
+                fillColor: 'red',
+                weight: 1
+            }
+            return obj
+        },
+        onEachFeature: function (feature, layer) {
+            var title = feature.properties.identifier
+            var opt = {
+                permanent: true
+            }
+            layer.bindTooltip(title, opt)
+            layer.closeTooltip();
+        }
+    }).on('add', function () {
+        controlMapsFunc()
+    })
+
+    //管制区
+    var accMap = L.geoJSON(acc, {
+        style: function (feature) {
+            var obj = {
+                color: '#32adcc',
+                fillColor: 'red',
+                weight: 1
+            }
+            return obj
+        },
+        onEachFeature: function (feature, layer) {
+            var title = feature.properties.identifier
+            var opt = {
+                permanent: true
+            }
+            layer.bindTooltip(title, opt)
+            layer.closeTooltip();
+        }
+    }).on('add', function () {
+        controlMapsFunc()
+    })
+
+    //进近终端区
+    var appterMap = L.geoJSON(appter, {
+        style: function (feature) {
+            var obj = {
+                color: '#32adcc',
+                fillColor: 'transparent',
+                weight: 1
+            }
+            return obj
+        },
+        onEachFeature: function (feature, layer) {
+            var title = feature.properties.name + feature.properties.verticalScope
+            var opt = {
+                permanent: true
+            }
+            layer.bindTooltip(title, opt)
+            layer.closeTooltip();
+        }
+    }).on('add', function () {
+        controlMapsFunc()
+    })
+
+    //进近扇区
+    var appsectorMap = L.geoJSON(appsector, {
+        style: function (feature) {
+            var obj = {
+                color: '#32adcc',
+                fillColor: 'transparent',
+                weight: 1
+            }
+            return obj
+        },
+        onEachFeature: function (feature, layer) {
+            var title = feature.properties.name + feature.properties.verticalScope
+            var opt = {
+                permanent: true
+            }
+            layer.bindTooltip(title, opt)
+            layer.closeTooltip();
+        }
+    }).on('add', function () {
+        controlMapsFunc()
+    })
+
+    //情报区
+    var firMap = L.geoJSON(fir, {
+        style: function (feature) {
+            var obj = {
+                color: 'pink',
+                fillColor: 'transparent',
+                weight: 1
+            }
+            return obj
+        },
+        onEachFeature: function (feature, layer) {
+            var title = feature.properties.name + '-'+ feature.properties.cnName + '情报区'
+            var opt = {
+                permanent: true
+            }
+            layer.bindTooltip(title, opt)
+            layer.closeTooltip();
+        }
+    }).on('add', function () {
         controlMapsFunc()
     })
 
@@ -164,7 +274,40 @@ var initMap = function () {
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
         }
-    }).on('add',function(){
+    }).on('add', function () {
+        controlMapsFunc()
+    })
+
+// 机场图标
+    var waypointIcon = L.icon({
+        iconUrl: 'img/waypoint.png',
+        iconSize: [18, 18],
+    })
+    //航路点
+    var waypointMap = L.geoJSON(waypoint, {
+        // 添加机场图标
+        pointToLayer: function (geoJsonPoint, latlng) {
+            return L.marker(latlng, {
+                icon: waypointIcon,
+            })
+        },
+        style: function (feature) {
+            var obj = {
+                color: '#32adcc',
+                fillColor: 'transparent',
+                weight: 1
+            }
+            return obj
+        },
+        onEachFeature: function (feature, layer) {
+            var title = feature.properties.identifier+ "-"+ feature.properties.name
+            var opt = {
+                permanent: true
+            }
+            layer.bindTooltip(title, opt)
+            layer.closeTooltip();
+        }
+    }).on('add', function () {
         controlMapsFunc()
     })
     //设置地图中心视角
@@ -172,7 +315,6 @@ var initMap = function () {
 
     // 北京机场底图
     var airportImg = {};
-
 
 
     //放大缩小控制器
@@ -193,16 +335,21 @@ var initMap = function () {
 
     //定义图层
     var baseMapLaysers = {
-        '中国':cnMap,
+        '中国': cnMap,
     }
     //添加图层控制
     var layerControl = L.control.layers(baseMapLaysers);
     layerControl.addTo(mymap);
-    layerControl.addOverlay(secMap,'扇区');
-    layerControl.addOverlay(runwayMap,'跑道');
-    layerControl.addOverlay(airpointMap,'机场点');
-    layerControl.addOverlay(velocityLayer,'风向图');
-
+    layerControl.addOverlay(secMap, '扇区');
+    layerControl.addOverlay(runwayMap, '跑道');
+    layerControl.addOverlay(airpointMap, '机场点');
+    layerControl.addOverlay(velocityLayer, '风向图');
+    layerControl.addOverlay(airwayMap, '航路');
+    layerControl.addOverlay(accMap, '管制区');
+    layerControl.addOverlay(appsectorMap, '进近扇区');
+    layerControl.addOverlay(appterMap, '进近终端区');
+    layerControl.addOverlay(firMap, '情报区');
+    layerControl.addOverlay(waypointMap, '航路点');
 
 
 }();
