@@ -127,27 +127,27 @@ var initMap = function () {
     laysersMap.push(runwayMap)
 
     //航路
-    var airwayMap = L.geoJSON(airway, {
-        style: function (feature) {
-            var obj = {
-                color: '#32adcc',
-                fillColor: 'red',
-                weight: 1
-            }
-            return obj
-        },
-        onEachFeature: function (feature, layer) {
-            var title = feature.properties.identifier
-            var opt = {
-                permanent: true
-            }
-            layer.bindTooltip(title, opt)
-            layer.closeTooltip();
-        }
-    }).on('add', function () {
-        controlMapsFunc(airwayMap)
-    })
-    laysersMap.push(airwayMap)
+    // var airwayMap = L.geoJSON(airway, {
+    //     style: function (feature) {
+    //         var obj = {
+    //             color: '#32adcc',
+    //             fillColor: 'red',
+    //             weight: 1
+    //         }
+    //         return obj
+    //     },
+    //     onEachFeature: function (feature, layer) {
+    //         var title = feature.properties.identifier
+    //         var opt = {
+    //             permanent: true
+    //         }
+    //         layer.bindTooltip(title, opt)
+    //         layer.closeTooltip();
+    //     }
+    // }).on('add', function () {
+    //     controlMapsFunc(airwayMap)
+    // })
+    // laysersMap.push(airwayMap)
 
     //管制区
     var accMap = L.geoJSON(acc, {
@@ -218,27 +218,27 @@ var initMap = function () {
     })
     laysersMap.push(appsectorMap)
     //情报区
-    var firMap = L.geoJSON(fir, {
-        style: function (feature) {
-            var obj = {
-                color: 'pink',
-                fillColor: 'transparent',
-                weight: 1
-            }
-            return obj
-        },
-        onEachFeature: function (feature, layer) {
-            var title = feature.properties.name + '-'+ feature.properties.cnName + '情报区'
-            var opt = {
-                permanent: true
-            }
-            layer.bindTooltip(title, opt)
-            layer.closeTooltip();
-        }
-    }).on('add', function () {
-        controlMapsFunc(firMap)
-    })
-    laysersMap.push(firMap)
+    // var firMap = L.geoJSON(fir, {
+    //     style: function (feature) {
+    //         var obj = {
+    //             color: 'pink',
+    //             fillColor: 'transparent',
+    //             weight: 1
+    //         }
+    //         return obj
+    //     },
+    //     onEachFeature: function (feature, layer) {
+    //         var title = feature.properties.name + '-'+ feature.properties.cnName + '情报区'
+    //         var opt = {
+    //             permanent: true
+    //         }
+    //         layer.bindTooltip(title, opt)
+    //         layer.closeTooltip();
+    //     }
+    // }).on('add', function () {
+    //     controlMapsFunc(firMap)
+    // })
+    // laysersMap.push(firMap)
     // 机场图标
     var airportIcon = L.icon({
         iconUrl: 'img/airport.png',
@@ -343,11 +343,11 @@ var initMap = function () {
     layerControl.addOverlay(runwayMap, '跑道');
     layerControl.addOverlay(airpointMap, '机场点');
     layerControl.addOverlay(velocityLayer, '风向图');
-    layerControl.addOverlay(airwayMap, '航路');
+    // layerControl.addOverlay(airwayMap, '航路');
     layerControl.addOverlay(accMap, '管制区');
     layerControl.addOverlay(appsectorMap, '进近扇区');
     layerControl.addOverlay(appterMap, '进近终端区');
-    layerControl.addOverlay(firMap, '情报区');
+    // layerControl.addOverlay(firMap, '情报区');
     layerControl.addOverlay(waypointMap, '航路点');
 
 
