@@ -36,34 +36,49 @@ var initMap = function () {
 
     var controlMapsFunc = function (obj) {
         var zoomIndex = mymap.getZoom();
-        if($.isArray(obj)){
-            $.each(obj,function (i,e) {
+        console.log(zoomIndex)
+        if ($.isArray(obj)) {
+            $.each(obj, function (i, e) {
                 if (zoomIndex * 1 >= 7) {
-                    if(mymap.hasLayer(e)){
+                    if (mymap.hasLayer(e)) {
                         e.eachLayer(function (layer) {
                             layer.openTooltip();
                         })
                     }
-                }else if(zoomIndex * 1 < 7){
+                } else if (zoomIndex * 1 < 7) {
                     e.eachLayer(function (layer) {
                         layer.closeTooltip();
                     })
                 }
             })
-        }else{
+        } else {
             if (zoomIndex * 1 >= 7) {
-                if(mymap.hasLayer(obj)){
+                if (mymap.hasLayer(obj)) {
                     obj.eachLayer(function (layer) {
                         layer.openTooltip();
                     })
+
                 }
-            }else if(zoomIndex * 1 < 7){
+            } else if (zoomIndex * 1 < 7) {
                 obj.eachLayer(function (layer) {
                     layer.closeTooltip();
                 })
             }
         }
-        if (zoomIndex * 1 == 10) {
+        //判断机场是否显示条件
+        if (zoomIndex * 1 > 10) {
+            if (!$.isEmptyObject(airportImg) && $.isValidObject(airportImg)) {
+                airportImg.setOpacity(1);
+            }
+        } else if (zoomIndex * 1 < 10) {
+            console.log('hide')
+            if ($.isEmptyObject(airportImg)) {
+                return
+            } else if ($.isValidObject(airportImg)) {
+                airportImg.setOpacity(0);
+            }
+        }
+        if (zoomIndex * 1 == 10 && $.isEmptyObject(airportImg)) {
             var url = "http://192.168.243.67:8080/img/beijingAirport/airport.png";
             imageBounds = [
                 [40.07222222222222 - zoomIndex * .01, 116.59722222222221 - zoomIndex * .009],
@@ -74,7 +89,7 @@ var initMap = function () {
     }
 
 
-    var  laysersMap = [];
+    var laysersMap = [];
     //扇区
     var secMap = L.geoJSON(sector, {
         style: function (feature) {
@@ -103,28 +118,6 @@ var initMap = function () {
         controlMapsFunc(secMap)
     })
     laysersMap.push(secMap)
-    //跑道
-    var runwayMap = L.geoJSON(runway, {
-        style: function (feature) {
-            var obj = {
-                color: '#32adcc',
-                fillColor: 'red',
-                weight: 1
-            }
-            return obj
-        },
-        onEachFeature: function (feature, layer) {
-            var title = feature.properties.name
-            var opt = {
-                permanent: true
-            }
-            layer.bindTooltip(title, opt)
-            layer.closeTooltip();
-        }
-    }).on('add', function () {
-        controlMapsFunc(runwayMap)
-    })
-    laysersMap.push(runwayMap)
 
     //航路
     // var airwayMap = L.geoJSON(airway, {
@@ -154,13 +147,13 @@ var initMap = function () {
         style: function (feature) {
             var obj = {
                 color: '#32adcc',
-                fillColor: 'red',
+                fillColor: 'transparent',
                 weight: 1
             }
             return obj
         },
         onEachFeature: function (feature, layer) {
-            var title = feature.properties.name
+            var title = feature.properties.name + '管制区'
             var opt = {
                 permanent: true
             }
@@ -273,6 +266,30 @@ var initMap = function () {
         controlMapsFunc(airpointMap)
     })
     laysersMap.push(airpointMap)
+    //跑道
+    var runwayMap = L.geoJSON(runway, {
+        style: function (feature) {
+            var obj = {
+                color: '#32adcc',
+                fillColor: 'red',
+                weight: 1
+            }
+            return obj
+        },
+        // onEachFeature: function (feature, layer) {
+        //     var title = feature.properties.name
+        //     var opt = {
+        //         permanent: true
+        //     }
+        //     layer.bindTooltip(title, opt)
+        //     layer.closeTooltip();
+        // }
+    }).on('add', function () {
+        controlMapsFunc(runwayMap)
+    })
+    laysersMap.push(runwayMap)
+
+    var airports = L.featureGroup([runwayMap,airpointMap])
 
 // 机场图标
     var waypointIcon = L.icon({
@@ -308,10 +325,10 @@ var initMap = function () {
     })
     laysersMap.push(waypointMap)
     //设置地图中心视角
-    mymap.setView([40, 100], 5)
+    mymap.setView([40, 100], 4)
 
     // 北京机场底图
-    var airportImg = {};
+    var airportImg = "";
 
 
     //放大缩小控制器
@@ -340,8 +357,8 @@ var initMap = function () {
     var layerControl = L.control.layers(baseMapLaysers);
     layerControl.addTo(mymap);
     layerControl.addOverlay(secMap, '扇区');
-    layerControl.addOverlay(runwayMap, '跑道');
-    layerControl.addOverlay(airpointMap, '机场点');
+    // layerControl.addOverlay(runwayMap, '跑道');
+    layerControl.addOverlay(airports, '机场');
     layerControl.addOverlay(velocityLayer, '风向图');
     // layerControl.addOverlay(airwayMap, '航路');
     layerControl.addOverlay(accMap, '管制区');
