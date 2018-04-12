@@ -34,44 +34,31 @@ var initMap = function () {
         }
     }).addTo(mymap);
 
-    var controlMapsFunc = function () {
+    var controlMapsFunc = function (obj) {
         var zoomIndex = mymap.getZoom();
-        console.log(zoomIndex);
-        if (zoomIndex * 1 >= 7) {
-            //显示扇区文字
-            if (mymap.hasLayer(secMap)) {
-                secMap.eachLayer(function (layer) {
-                    layer.openTooltip();
-                })
-            }
-            //显示机场点文字
-            if (mymap.hasLayer(airpointMap)) {
-                airpointMap.eachLayer(function (layer) {
-                    layer.openTooltip();
-                })
-            }
-            //显示跑道文字
-            if (mymap.hasLayer(runwayMap)) {
-                runwayMap.eachLayer(function (layer) {
-                    layer.openTooltip();
-                })
-            }
-        } else if (zoomIndex * 1 < 7) {
-            // 隐藏扇区文字
-            if (mymap.hasLayer(secMap)) {
-                secMap.eachLayer(function (layer) {
-                    layer.closeTooltip();
-                })
-            }
-            //隐藏机场文字
-            if (mymap.hasLayer(airpointMap)) {
-                airpointMap.eachLayer(function (layer) {
-                    layer.closeTooltip();
-                })
-            }
-            //隐藏跑道文字
-            if (mymap.hasLayer(runwayMap)) {
-                runwayMap.eachLayer(function (layer) {
+        if($.isArray(obj)){
+            $.each(obj,function (i,e) {
+                if (zoomIndex * 1 >= 7) {
+                    if(mymap.hasLayer(e)){
+                        e.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        })
+                    }
+                }else if(zoomIndex * 1 < 7){
+                    e.eachLayer(function (layer) {
+                        layer.closeTooltip();
+                    })
+                }
+            })
+        }else{
+            if (zoomIndex * 1 >= 7) {
+                if(mymap.hasLayer(obj)){
+                    obj.eachLayer(function (layer) {
+                        layer.openTooltip();
+                    })
+                }
+            }else if(zoomIndex * 1 < 7){
+                obj.eachLayer(function (layer) {
                     layer.closeTooltip();
                 })
             }
@@ -85,6 +72,9 @@ var initMap = function () {
             airportImg = L.imageOverlay(url, imageBounds).addTo(mymap);
         }
     }
+
+
+    var  laysersMap = [];
     //扇区
     var secMap = L.geoJSON(sector, {
         style: function (feature) {
@@ -110,8 +100,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(secMap)
     })
+    laysersMap.push(secMap)
     //跑道
     var runwayMap = L.geoJSON(runway, {
         style: function (feature) {
@@ -131,8 +122,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(runwayMap)
     })
+    laysersMap.push(runwayMap)
 
     //航路
     var airwayMap = L.geoJSON(airway, {
@@ -153,8 +145,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(airwayMap)
     })
+    laysersMap.push(airwayMap)
 
     //管制区
     var accMap = L.geoJSON(acc, {
@@ -167,7 +160,7 @@ var initMap = function () {
             return obj
         },
         onEachFeature: function (feature, layer) {
-            var title = feature.properties.identifier
+            var title = feature.properties.name
             var opt = {
                 permanent: true
             }
@@ -175,8 +168,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(accMap)
     })
+    laysersMap.push(accMap)
 
     //进近终端区
     var appterMap = L.geoJSON(appter, {
@@ -197,8 +191,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(appterMap)
     })
+    laysersMap.push(appterMap)
 
     //进近扇区
     var appsectorMap = L.geoJSON(appsector, {
@@ -219,9 +214,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(appsectorMap)
     })
-
+    laysersMap.push(appsectorMap)
     //情报区
     var firMap = L.geoJSON(fir, {
         style: function (feature) {
@@ -241,9 +236,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(firMap)
     })
-
+    laysersMap.push(firMap)
     // 机场图标
     var airportIcon = L.icon({
         iconUrl: 'img/airport.png',
@@ -275,8 +270,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(airpointMap)
     })
+    laysersMap.push(airpointMap)
 
 // 机场图标
     var waypointIcon = L.icon({
@@ -300,7 +296,7 @@ var initMap = function () {
             return obj
         },
         onEachFeature: function (feature, layer) {
-            var title = feature.properties.identifier+ "-"+ feature.properties.name
+            var title = feature.properties.identifier + "-" + feature.properties.name;
             var opt = {
                 permanent: true
             }
@@ -308,8 +304,9 @@ var initMap = function () {
             layer.closeTooltip();
         }
     }).on('add', function () {
-        controlMapsFunc()
+        controlMapsFunc(waypointMap)
     })
+    laysersMap.push(waypointMap)
     //设置地图中心视角
     mymap.setView([40, 100], 5)
 
@@ -318,7 +315,9 @@ var initMap = function () {
 
 
     //放大缩小控制器
-    mymap.on('zoomend', controlMapsFunc)
+    mymap.on('zoomend', function () {
+        controlMapsFunc(laysersMap)
+    })
 
 
     //风向图层
