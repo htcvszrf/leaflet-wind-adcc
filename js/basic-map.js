@@ -5,8 +5,9 @@ var initMap = function () {
         style: function (feature) {
             return {
                 color: '#5c5c5c',
-                fillColor: '#1f1f1f',
-                weight: .8
+                fillColor: '#666',
+                weight: .8,
+                // fillOpacity:1
             }
 
         }
@@ -16,8 +17,9 @@ var initMap = function () {
         style: function (feature) {
             return {
                 color: '#5c5c5c',
-                fillColor: '#1f1f1f',
-                weight: .8
+                fillColor: '#ccc',
+                weight: .8,
+                // fillOpacity:1
             }
 
         }
@@ -27,8 +29,9 @@ var initMap = function () {
         style: function (feature) {
             return {
                 color: '#5c5c5c',
-                fillColor: '#1f1f1f',
-                weight: .8
+                fillColor: '#ccc',
+                weight: .8,
+                // fillOpacity:1
             }
 
         }
@@ -354,12 +357,14 @@ var initMap = function () {
     var velocityLayer = L.velocityLayer({
         displayValues: true,
         displayOptions: {
-            velocityType: 'GBR Wind',
+            velocityType: '风向图',
             displayPosition: 'bottom left',
             displayEmptyString: 'No wind data'
         },
         data: wind,
-        maxVelocity: 5
+        maxVelocity: 10
+    }).on('add', function () {
+
     });
 
     //定义图层
