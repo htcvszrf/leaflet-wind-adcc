@@ -5,8 +5,8 @@ var initMap = function () {
         style: function (feature) {
             return {
                 color: '#5c5c5c',
-                fillColor: '#1e1e1e',
-                weight: 1
+                fillColor: '#1f1f1f',
+                weight: .8
             }
 
         }
@@ -16,8 +16,8 @@ var initMap = function () {
         style: function (feature) {
             return {
                 color: '#5c5c5c',
-                fillColor: '#204562',
-                weight: 1
+                fillColor: '#1f1f1f',
+                weight: .8
             }
 
         }
@@ -27,8 +27,8 @@ var initMap = function () {
         style: function (feature) {
             return {
                 color: '#5c5c5c',
-                fillColor: '#204562',
-                weight: 1
+                fillColor: '#1f1f1f',
+                weight: .8
             }
 
         }
@@ -97,7 +97,7 @@ var initMap = function () {
     var secMap = L.geoJSON(sector, {
         style: function (feature) {
             var obj = {
-                color: '#32adcc',
+                color: '#3333ff',
                 fillColor: 'transparent',
                 weight: 1
             }
@@ -106,7 +106,8 @@ var initMap = function () {
         onEachFeature: function (feature, layer) {
             var title = feature.properties.name + " " + feature.properties["sub-name"]
             var opt = {
-                permanent: true
+                permanent: true,
+                className:'sector'
             }
             if (feature.properties["sub-name"].indexOf('以上') > -1) {
                 opt.offset = L.point(0, -20)
@@ -149,7 +150,7 @@ var initMap = function () {
     var accMap = L.geoJSON(acc, {
         style: function (feature) {
             var obj = {
-                color: '#32adcc',
+                color: '#165e83',
                 fillColor: 'transparent',
                 weight: 1
             }
@@ -158,7 +159,8 @@ var initMap = function () {
         onEachFeature: function (feature, layer) {
             var title = feature.properties.name + '管制区'
             var opt = {
-                permanent: true
+                permanent: true,
+                className:''
             }
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
@@ -172,7 +174,7 @@ var initMap = function () {
     var appterMap = L.geoJSON(appter, {
         style: function (feature) {
             var obj = {
-                color: '#32adcc',
+                color: '#1e50a2',
                 fillColor: 'transparent',
                 weight: 1
             }
@@ -181,7 +183,8 @@ var initMap = function () {
         onEachFeature: function (feature, layer) {
             var title = feature.properties.name + feature.properties.verticalScope
             var opt = {
-                permanent: true
+                permanent: true,
+                className:'appter'
             }
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
@@ -195,7 +198,7 @@ var initMap = function () {
     var appsectorMap = L.geoJSON(appsector, {
         style: function (feature) {
             var obj = {
-                color: '#32adcc',
+                color: '#59b9c6',
                 fillColor: 'transparent',
                 weight: 1
             }
@@ -204,7 +207,8 @@ var initMap = function () {
         onEachFeature: function (feature, layer) {
             var title = feature.properties.name + feature.properties.verticalScope
             var opt = {
-                permanent: true
+                permanent: true,
+                className:'appsector'
             }
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
@@ -260,7 +264,8 @@ var initMap = function () {
         onEachFeature: function (feature, layer) {
             var title = feature.properties.name
             var opt = {
-                permanent: true
+                permanent: true,
+                className:'apName'
             }
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
@@ -273,8 +278,8 @@ var initMap = function () {
     var runwayMap = L.geoJSON(runway, {
         style: function (feature) {
             var obj = {
-                color: '#32adcc',
-                fillColor: 'red',
+                color: '#0033ff',
+                fillColor: '#0033ff',
                 weight: 1
             }
             return obj
@@ -294,7 +299,7 @@ var initMap = function () {
     //合并机场点和跑道
     var airports = L.featureGroup([runwayMap,airpointMap])
 
-// 机场图标
+    // 航路点图标
     var waypointIcon = L.icon({
         iconUrl: 'img/waypoint.png',
         iconSize: [18, 18],
@@ -322,7 +327,8 @@ var initMap = function () {
                 var title = feature.properties.name;
             }
             var opt = {
-                permanent: true
+                permanent: true,
+                className:'airwaypoint'
             }
             layer.bindTooltip(title, opt)
             layer.closeTooltip();
