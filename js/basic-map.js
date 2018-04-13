@@ -33,7 +33,10 @@ var initMap = function () {
 
         }
     }).addTo(mymap);
-
+    /**
+     * 控制器
+     * @param obj 图层对象
+     */
     var controlMapsFunc = function (obj) {
         var zoomIndex = mymap.getZoom();
         console.log(zoomIndex)
@@ -78,7 +81,7 @@ var initMap = function () {
                 airportImg.setOpacity(0);
             }
         }
-        if (zoomIndex * 1 == 10 && $.isEmptyObject(airportImg)) {
+        if (zoomIndex * 1 == 10 && $.isEmptyObject(airportImg)&&mymap.hasLayer(airpointMap)) {
             var url = "http://192.168.243.67:8080/img/beijingAirport/airport.png";
             imageBounds = [
                 [40.07222222222222 - zoomIndex * .01, 116.59722222222221 - zoomIndex * .009],
@@ -288,7 +291,7 @@ var initMap = function () {
         controlMapsFunc(runwayMap)
     })
     laysersMap.push(runwayMap)
-
+    //合并机场点和跑道
     var airports = L.featureGroup([runwayMap,airpointMap])
 
 // 机场图标
@@ -313,7 +316,11 @@ var initMap = function () {
             return obj
         },
         onEachFeature: function (feature, layer) {
-            var title = feature.properties.identifier + "-" + feature.properties.name;
+            if($.isValidVariable(feature.properties.identifier)){
+                var title = feature.properties.identifier + "-" + feature.properties.name;
+            }else{
+                var title = feature.properties.name;
+            }
             var opt = {
                 permanent: true
             }
