@@ -325,6 +325,13 @@ var initMap = (function() {
       }
     },2000)
   };
+
+  var initFlightAnimation = function () {
+  //遍历航班动画数据
+    $.each(flihgtAnimation,function (i,e) {
+      
+    })
+  }
   laysersMap.push(runwayMap);
   //合并机场点和跑道
   var airports = L.featureGroup([runwayMap, airpointMap]);
