@@ -14,10 +14,11 @@
 <script src="node_modules/xmltojson/lib/xmlToJSON.js"></script>
 <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
 <script src="FileSaver.js-master/src/FileSaver.js"></script>
-<script src="json/airway.js"></script>
+<script src="../plugins/jquery/jquery-custom-util.js"></script>
+<script src="json/fir.js"></script>
 <script>
 
-    console.log(airway);
+    console.log(flightAnimation);
     Array.prototype.distinct = function () {
         var arr = this,
                 i,
@@ -226,22 +227,22 @@
     //          features.push(obj);
     //     })
     //航路
-    $.each(airway.airways.airway, function (i, e) {
-                     var obj = {};
-                     obj['type'] = 'Feature';
-                     obj['properties'] = {};
-                     obj['properties']['name'] = e.name[0];
-                     obj['properties']['identifier'] = e.identifier[0];
-                     obj['geometry'] = {};
-                     obj['geometry']['type'] = "LineString";
-                     var arr = [];
-                     $.each(JSON.parse(e.geographic[0]), function (j, k) {
-                         dataCaculate(k[0],arr)
-                         dataCaculate(k[1],arr)
-                     })
-                     obj['geometry']['coordinates'] = arr;
-                     features.push(obj);
-    })
+//    $.each(airway.airways.airway, function (i, e) {
+//                     var obj = {};
+//                     obj['type'] = 'Feature';
+//                     obj['properties'] = {};
+//                     obj['properties']['name'] = e.name[0];
+//                     obj['properties']['identifier'] = e.identifier[0];
+//                     obj['geometry'] = {};
+//                     obj['geometry']['type'] = "LineString";
+//                     var arr = [];
+//                     $.each(JSON.parse(e.geographic[0]), function (j, k) {
+//                         dataCaculate(k[0],arr)
+//                         dataCaculate(k[1],arr)
+//                     })
+//                     obj['geometry']['coordinates'] = arr;
+//                     features.push(obj);
+//    })
     //进近扇区
 //    $.each(appsector.appsectors.appsector, function (i, e) {
 //        var obj = {};
@@ -361,13 +362,32 @@
 //              features.push(obj);
 //         })
 
-    console.log(features);
-    var mapObj = {
-        "type": "FeatureCollection",
-        "features": features
-    }
-    console.log(mapObj);
-
+//    console.log(features);
+    
+//    var mapObj = {
+//        "type": "FeatureCollection",
+//        "features": features
+//    }
+//    console.log(mapObj);
+//    var newObj = {}
+//    $.each(flightAnimation,function (i,e) {
+//        $.each(flightAnimation,function (j,k) {
+//            if(i == j){
+//                    if(!$.isValidObject(newObj[i])){
+//                        newObj[i] = [];
+//                    }
+//            }
+//        })
+//    })
+//    console.log(newObj);
+//    $.each(newObj,function (i,e) {
+//        $.each(flightAnimation,function (j,k) {
+//            if(i == j){
+//                newObj[i].push(k);
+//            }
+//        })
+//    })
+//    console.log(newObj);
     function downloadJson(data) {
         var blob = new Blob([JSON.stringify(data)], {
             type: ""
@@ -375,7 +395,7 @@
         saveAs(blob, "airway.js");
 
     }
-        downloadJson(mapObj);
+//        downloadJson(mapObj);
 </script>
 
 </html>
