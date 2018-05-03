@@ -39,7 +39,6 @@ var initMap = (function() {
    */
   var controlMapsFunc = function(obj) {
     var zoomIndex = mymap.getZoom();
-    console.log(zoomIndex);
     if ($.isArray(obj)) {
       $.each(obj, function(i, e) {
         if (zoomIndex * 1 >= 7) {
@@ -290,47 +289,87 @@ var initMap = (function() {
   var runwayMap = L.geoJSON(runway, {
     style: function(feature) {
       var obj = {
-        color: "#0033ff",
-        fillColor: "#0033ff",
+        color: "green",
+        fillColor: "green",
         weight: 1
       };
       return obj;
+    },
+    onEachFeature: function (feature, layer) {
+        var title = feature.properties.name
+        var opt = {
+            permanent: true
+        }
+      layer._leaflet_id = title;
     }
-    // onEachFeature: function (feature, layer) {
-    //     var title = feature.properties.name
-    //     var opt = {
-    //         permanent: true
-    //     }
-    //     layer.bindTooltip(title, opt)
-    //     layer.closeTooltip();
-    // }
   }).on("add", function() {
     controlMapsFunc(runwayMap);
+    // console.log(flightAinamtion)
     //添加航班标记(贵阳龙洞堡机场)
-    var flightIcon =  L.divIcon({className: 'circle'})
-    flightMove = L.marker([flightAinamtion[flStep].lat,flightAinamtion[flStep].lon],{
-      icon: flightIcon
-    }).addTo(mymap)
-      initAnimation();
+    // var flightIcon =  L.divIcon({className: 'circle'})
+    // flightMove = L.marker([flightAinamtion[flStep].lat,flightAinamtion[flStep].lon],{
+    //   icon: flightIcon
+    // }).addTo(mymap)
+    //   initAnimation();
+    initFlightAnimation()
   });
-  //初始化航班动画
-  var initAnimation = function () {
-    // 定时器
-    timer = setTimeout(function () {
-      flStep++;
-      flightMove.setLatLng([flightAinamtion[flStep].lat,flightAinamtion[flStep].lon]);
-      initAnimation();
-      if(flStep == 12){
-        flStep = 0;
-      }
-    },2000)
-  };
 
+  //初始化航班动画
   var initFlightAnimation = function () {
+    var flightIcon =  L.divIcon({className: 'circle'});
+    var flights = {};
   //遍历航班动画数据
-    $.each(flihgtAnimation,function (i,e) {
-      
+    $.each(flightAinamtion,function (i,e) {
+      //拿到航班数据进行动画渲染
+      var flightMove = L.circleMarker([e[0].lat,e[0].lon],{
+        radius: 10,
+        color:'orange'
+      }).addTo(mymap);
+      //设置航班名称
+      var title = i;
+      var opt = {
+        permanent: true,
+      };
+      flightMove.bindTooltip(title, opt);
+      //绑定数据
+      flightMove['positionData'] = flightAinamtion[i];
+      flightMove['flStep'] = 0;
+      flights[i] = flightMove;
     })
+    var timer = setInterval(function () {
+      $.each(flights,function (i,e) {
+        //判断加减速状态
+        if(e.positionData[e.flStep].vec*1 - e.positionData[e.flStep+1].vec*1>30){
+          e.setStyle({
+            color:'blue'
+          })
+        }else if(e.positionData[e.flStep].vec*1 - e.positionData[e.flStep+1].vec*1<-30){
+          e.setStyle({
+            color:'red'
+          })
+        }
+        //设置定时器
+        e.setLatLng([e.positionData[e.flStep].lat, e.positionData[e.flStep].lon])
+        //匹配航班是否进入跑道
+        var results = leafletPip.pointInLayer([e.positionData[e.flStep].lon,e.positionData[e.flStep].lat], runwayMap);
+        if(results.length>0){
+          //匹配成功设置跑道为占用状态
+          results[0].setStyle({
+            color:'red',
+            fillColor:'red'
+          })
+        }
+        e.flStep++;
+        //航班已起飞结束动画
+        if(e.flStep == e.positionData.length-1){
+          flights[i].remove();
+          delete flights[i];
+        }
+      })
+      if($.isEmptyObject(flights)){
+        clearInterval(timer);
+      }
+    },500)
   }
   laysersMap.push(runwayMap);
   //合并机场点和跑道
@@ -376,7 +415,9 @@ var initMap = (function() {
   });
   laysersMap.push(waypointMap);
   //设置地图中心视角
-  mymap.setView([40, 100], 4);
+  mymap.setView([40.072222, 116.597222], 13);//北京机场
+  // mymap.setView([26.538056,106.801111], 15);//贵阳龙洞堡
+  // mymap.setView([22.310000,113.911667], 15);//香港
 
   // 北京机场底图
   // var airportImg = "";
@@ -408,7 +449,7 @@ var initMap = (function() {
     useLocalExtrema: true, //使用局部极值
     latField: "lat", //维度
     lngField: "lng", //经度
-    valueField: "count", //热力点的值
+    valueField: "value", //热力点的值
     gradient: {
       "0.99": "rgba(255,0,0,.5)",
       "0.9": "rgba(255,255,0,1)",
@@ -421,8 +462,8 @@ var initMap = (function() {
   var testData = {
     max: 10,
     data: [
-      { lat: 40.07222222222222, lng: 116.59722222222221, count: 100 },
-      { lat: 39.07222222222222, lng: 117.00722222222221, count: 100 }
+      { lat: 40.07222222222222, lng: 116.59722222222221, value: 10 },
+      { lat: 39.07222222222222, lng: 117.00722222222221, value: 10 }
     ]
   };
   
@@ -526,6 +567,12 @@ var initMap = (function() {
         heatLayer.setData(heatMapData[value]);
       }
     },
+    ondragend:function () {
+      var value = $(".range-slider").jRange("getValue")
+      if(value != NaN){
+        heatLayer.setData(heatMapData[value]);
+      }
+    },
     width: 800,
     showLabels: true,
     snap: true
@@ -534,172 +581,172 @@ var initMap = (function() {
     initHeatAnimation();
   });
   var heatMapData = {
-    201804280000: {
+    201805030000: {
       max: 10,
       data: [
-        { lat: 40.07222222222222, lng: 116.59722222222221, count: 100 },
-        { lat: 39.07222222222222, lng: 117.00722222222221, count: 100 }
+        { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 ,radius:0.1},
+        { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 ,radius:1}
       ]
     },
-    201804280100: {
+    201805030100: {
       max: 10,
       data: [
-        { lat: 41.07222222222222, lng: 117.59722222222221, count: 100 },
-        { lat: 38.07222222222222, lng: 115.00722222222221, count: 100 }
+        { lat: 41.07222222222222, lng: 117.59722222222221, value: 100 ,radius:0.2},
+        { lat: 38.07222222222222, lng: 115.00722222222221, value: 100 ,radius:0.02}
       ]
     },
-    201804280200: {
+    201805030200: {
       max: 10,
       data: [
-        { lat: 42.07222222222222, lng: 118.59722222222221, count: 100 },
-        { lat: 36.07222222222222, lng: 113.00722222222221, count: 100 }
+        { lat: 42.07222222222222, lng: 118.59722222222221, value: 100 },
+        { lat: 36.07222222222222, lng: 113.00722222222221, value: 100 }
       ]
     },
-    201804280300: {
+    201805030300: {
       max: 10,
       data: [
-        { lat: 45.07222222222222, lng: 120.59722222222221, count: 100 },
-        { lat: 30.07222222222222, lng: 110.00722222222221, count: 100 }
+        { lat: 45.07222222222222, lng: 120.59722222222221, value: 100 },
+        { lat: 30.07222222222222, lng: 110.00722222222221, value: 100 }
       ]
     },
-    201804280400: {
+    201805030400: {
       max: 10,
       data: [
-        { lat: 42.07222222222222, lng: 120.59722222222221, count: 100 },
-        { lat: 35.07222222222222, lng: 105.00722222222221, count: 100 }
+        { lat: 42.07222222222222, lng: 120.59722222222221, value: 100 },
+        { lat: 35.07222222222222, lng: 105.00722222222221, value: 100 }
       ]
     },
-    201804280500: {
+    201805030500: {
       max: 10,
       data: [
-        { lat: 30.691667, lng: 106.101667, count: 100 },
-        { lat: 37.034444, lng: 79.869167, count: 100 }
+        { lat: 30.691667, lng: 106.101667, value: 100 },
+        { lat: 37.034444, lng: 79.869167, value: 100 }
       ]
     },
-    201804280600: {
+    201805030600: {
       max: 10,
       data: [
-        { lat: 31.156944, lng: 107.44, count: 100 },
-        { lat: 36.638333, lng: 109.605, count: 100 }
+        { lat: 31.156944, lng: 107.44, value: 100 },
+        { lat: 36.638333, lng: 109.605, value: 100 }
       ]
     },
-    201804280700: {
+    201805030700: {
       max: 10,
       data: [
-        { lat: 28.428611, lng: 115.921944, count: 100 },
-        { lat: 27.8616672, lng: 109.293333, count: 100 }
+        { lat: 28.428611, lng: 115.921944, value: 100 },
+        { lat: 27.8616672, lng: 109.293333, value: 100 }
       ]
     },
-    201804280800: {
+    201805030800: {
       max: 10,
       data: [
-        { lat: 41.266667, lng: 80.228333, count: 100 },
-        { lat: 31.589444, lng: 120.319444, count: 100 }
+        { lat: 41.266667, lng: 80.228333, value: 100 },
+        { lat: 31.589444, lng: 120.319444, value: 100 }
       ]
     },
-    201804280900: {
+    201805030900: {
       max: 10,
       data: [
-        { lat: 40.07222222222222, lng: 116.59722222222221, count: 100 },
-        { lat: 39.07222222222222, lng: 117.00722222222221, count: 100 }
+        { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
+        { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
       ]
     },
-    201804281000: {
+    201805031000: {
       max: 10,
       data: [
-        { lat: 43.908889, lng: 87.473056, count: 100 },
-        { lat: 21.861667, lng: 100.935556, count: 100 }
+        { lat: 43.908889, lng: 87.473056, value: 100 },
+        { lat: 21.861667, lng: 100.935556, value: 100 }
       ]
     },
-    201804281100: {
+    201805031100: {
       max: 10,
       data: [
-        { lat: 36.401667, lng: 94.881667, count: 100 },
-        { lat: 30.255, lng: 121.220278, count: 100 }
+        { lat: 36.401667, lng: 94.881667, value: 100 },
+        { lat: 30.255, lng: 121.220278, value: 100 }
       ]
     },
-    201804281200: {
+    201805031200: {
       max: 10,
       data: [
-        { lat: 40.07222222222222, lng: 116.59722222222221, count: 100 },
-        { lat: 39.07222222222222, lng: 117.00722222222221, count: 100 }
+        { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
+        { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
       ]
     },
-    201804281300: {
+    201805031300: {
       max: 10,
       data: [
-        { lat: 35.758333, lng: 107.645, count: 100 },
-        { lat: 24.409722, lng: 98.538056, count: 100 }
+        { lat: 35.758333, lng: 107.645, value: 100 },
+        { lat: 24.409722, lng: 98.538056, value: 100 }
       ]
     },
-    201804281400: {
+    201805031400: {
       max: 10,
       data: [
-        { lat: 38.149444, lng: 85.534444, count: 100 },
-        { lat: 28.799444, lng: 104.555556, count: 100 }
+        { lat: 38.149444, lng: 85.534444, value: 100 },
+        { lat: 28.799444, lng: 104.555556, value: 100 }
       ]
     },
-    201804281500: {
+    201805031500: {
       max: 10,
       data: [
-        { lat: 30.523056, lng: 97.14, count: 100 },
-        { lat: 40.148333, lng: 94.708333, count: 100 }
+        { lat: 30.523056, lng: 97.14, value: 100 },
+        { lat: 40.148333, lng: 94.708333, value: 100 }
       ]
     },
-    201804281600: {
+    201805031600: {
       max: 10,
       data: [
-        { lat: 34.276944, lng: 117.999167, count: 100 },
-        { lat: 25.644167, lng: 100.324722, count: 100 }
+        { lat: 34.276944, lng: 117.999167, value: 100 },
+        { lat: 25.644167, lng: 100.324722, value: 100 }
       ]
     },
-    201804281700: {
+    201805031700: {
       max: 10,
       data: [
-        { lat: 32.672222, lng: 118.579167, count: 100 },
-        { lat: 34.555, lng: 108.63, count: 100 }
+        { lat: 32.672222, lng: 118.579167, value: 100 },
+        { lat: 34.555, lng: 108.63, value: 100 }
       ]
     },
-    201804281800: {
+    201805031800: {
       max: 10,
       data: [
-        { lat: 40.07222222222222, lng: 116.59722222222221, count: 100 },
-        { lat: 39.07222222222222, lng: 117.00722222222221, count: 100 }
+        { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
+        { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
       ]
     },
-    201804281900: {
+    201805031900: {
       max: 10,
       data: [
-        { lat: 34.600278, lng: 108.916389, count: 100 },
-        { lat: 34.431667, lng: 108.728333, count: 100 }
+        { lat: 34.600278, lng: 108.916389, value: 100 },
+        { lat: 34.431667, lng: 108.728333, value: 100 }
       ]
     },
-    201804282000: {
+    201805032000: {
       max: 10,
       data: [
-        { lat: 36.528056, lng: 102.031389, count: 100 },
-        { lat: 30.886667, lng: 120.416667, count: 100 }
+        { lat: 36.528056, lng: 102.031389, value: 100 },
+        { lat: 30.886667, lng: 120.416667, value: 100 }
       ]
     },
-    201804282100: {
+    201805032100: {
       max: 10,
       data: [
-        { lat: 28.852778, lng: 105.385556, count: 100 },
-        { lat: 46.66, lng: 83.37, count: 100 }
+        { lat: 28.852778, lng: 105.385556, value: 100 },
+        { lat: 46.66, lng: 83.37, value: 100 }
       ]
     },
-    201804282200: {
+    201805032200: {
       max: 10,
       data: [
-        { lat: 29.631667, lng: 105.756667, count: 100 },
-        { lat: 29.765, lng: 119.658333, count: 100 }
+        { lat: 29.631667, lng: 105.756667, value: 100 },
+        { lat: 29.765, lng: 119.658333, value: 100 }
       ]
     },
-    201804282300: {
+    201805032300: {
       max: 10,
       data: [
-        { lat: 22.646667, lng: 113.801667, count: 100 },
-        { lat: 29.764444, lng: 119.658333, count: 100 }
+        { lat: 22.646667, lng: 113.801667, value: 100 },
+        { lat: 29.764444, lng: 119.658333, value: 100 }
       ]
     }
   };
@@ -742,4 +789,6 @@ var initMap = (function() {
       clearTimeout(timer);
     }
   };
+  
+
 })();

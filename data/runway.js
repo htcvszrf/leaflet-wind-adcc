@@ -1683,7 +1683,7 @@ var runway = {
     }, {
         "type": "Feature",
         "properties": {
-            "name": "北京/首都"
+            "name": "北京/首都0"
         },
         "geometry": {
             "type": "Polygon",
@@ -1699,7 +1699,7 @@ var runway = {
     }, {
         "type": "Feature",
         "properties": {
-            "name": "北京/首都"
+            "name": "北京/首都1"
         },
         "geometry": {
             "type": "Polygon",
@@ -1715,7 +1715,7 @@ var runway = {
     }, {
         "type": "Feature",
         "properties": {
-            "name": "北京/首都"
+            "name": "北京/首都2"
         },
         "geometry": {
             "type": "Polygon",
