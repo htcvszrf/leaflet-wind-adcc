@@ -1,44 +1,53 @@
 var initMap = (function() {
-  var mymap = L.map("main");
-  // //中国轮廓图
-  // var cnMap = L.geoJSON(china, {
-  //     style: function (feature) {
-  //         return {
-  //             color: "#5c5c5c",
-  //             fillColor: "#666",
-  //             weight: 0.8
-  //             // fillOpacity:1
-  //         };
-  //     }
-  // }).addTo(mymap);
-  // //边境地图
-  // L.geoJSON(bd4, {
-  //     style: function (feature) {
-  //         return {
-  //             color: "#5c5c5c",
-  //             fillColor: "#ccc",
-  //             weight: 0.8
-  //             // fillOpacity:1
-  //         };
-  //     }
-  // }).addTo(mymap);
-  // //边境地图
-  // L.geoJSON(bd3, {
-  //     style: function (feature) {
-  //         return {
-  //             color: "#5c5c5c",
-  //             fillColor: "#ccc",
-  //             weight: 0.8
-  //             // fillOpacity:1
-  //         };
-  //     }
-  // }).addTo(mymap);
+  var mymap = L.map("main", {
+    crs : L.CRS.EPSG4326,
+    });
+  mymap.on('moveend',function () {
+    var arr = mymap.getBounds();
+    console.log(arr);
+  })
+  var openmap = L.tileLayer.wms('http://192.168.243.41:7070/geoserver/gwc/service/wms',{layers: 'chinaosm:osm',format:'image/png8'}).addTo(mymap)
+  //中国轮廓图
+  L.geoJSON(china, {
+      style: function (feature) {
+          return {
+              color: "#c5c5c5",
+              fillColor: "#ff000000",
+              weight: 0.8
+              // fillOpacity:1
+          };
+      }
+  }).addTo(mymap);
+  //边境地图
+  L.geoJSON(bd4, {
+      style: function (feature) {
+          return {
+              color: "#5c5c5c",
+              fillColor: "#ccc",
+              weight: 0.8
+              // fillOpacity:1
+          };
+      }
+  }).addTo(mymap);
+  //边境地图
+  L.geoJSON(bd3, {
+      style: function (feature) {
+          return {
+              color: "#5c5c5c",
+              fillColor: "#ccc",
+              weight: 0.8
+              // fillOpacity:1
+          };
+      }
+  }).addTo(mymap);
   /**
    * 控制器
    * @param obj 图层对象
    */
   var controlMapsFunc = function(obj) {
     var zoomIndex = mymap.getZoom();
+    var bound = mymap.getBounds();
+    console.log(bound);
     if ($.isArray(obj)) {
       $.each(obj, function(i, e) {
         if (zoomIndex * 1 >= 7) {
@@ -66,37 +75,6 @@ var initMap = (function() {
         });
       }
     }
-    //判断机场是否显示条件
-    // if (zoomIndex * 1 > 10) {
-    //     if (!$.isEmptyObject(airportImg) && $.isValidObject(airportImg)) {
-    //         airportImg.setOpacity(1);
-    //     }
-    // } else if (zoomIndex * 1 < 10) {
-    //     console.log("hide");
-    //     if ($.isEmptyObject(airportImg)) {
-    //         return;
-    //     } else if ($.isValidObject(airportImg)) {
-    //         airportImg.setOpacity(0);
-    //     }
-    // }
-    // if (
-    //     zoomIndex * 1 == 10 &&
-    //     $.isEmptyObject(airportImg) &&
-    //     mymap.hasLayer(airpointMap)
-    // ) {
-    //     var url = "http://192.168.243.67:8080/img/beijingAirport/airport.png";
-    //     imageBounds = [
-    //         [
-    //             40.07222222222222 - zoomIndex * 0.01,
-    //             116.59722222222221 - zoomIndex * 0.009
-    //         ],
-    //         [
-    //             40.07222222222222 + zoomIndex * 0.01,
-    //             116.59722222222221 + zoomIndex * 0.009
-    //         ]
-    //     ];
-    //     airportImg = L.imageOverlay(url, imageBounds).addTo(mymap);
-    // }
   };
 
   var laysersMap = [];
@@ -132,27 +110,9 @@ var initMap = (function() {
   laysersMap.push(secMap);
 
   //航路
-  // var airwayMap = L.geoJSON(airway, {
-  //     style: function (feature) {
-  //         var obj = {
-  //             color: '#32adcc',
-  //             fillColor: 'red',
-  //             weight: 1
-  //         }
-  //         return obj
-  //     },
-  //     onEachFeature: function (feature, layer) {
-  //         var title = feature.properties.identifier
-  //         var opt = {
-  //             permanent: true
-  //         }
-  //         layer.bindTooltip(title, opt)
-  //         layer.closeTooltip();
-  //     }
-  // }).on('add', function () {
-  //     controlMapsFunc(airwayMap)
-  // })
-  // laysersMap.push(airwayMap)
+  // var airwayMap =  L.tileLayer.wms('http://192.168.243.67:3619/geoserver/gwc/service/wms',{layers: 'china-osm:airway',format:'image/png8'}).on("add", function() {
+  //   controlMapsFunc(waypointMap);
+  // });
 
   //管制区
   var accMap = L.geoJSON(acc, {
@@ -226,27 +186,10 @@ var initMap = (function() {
   });
   laysersMap.push(appsectorMap);
   //情报区
-  // var firMap = L.geoJSON(fir, {
-  //     style: function (feature) {
-  //         var obj = {
-  //             color: 'pink',
-  //             fillColor: 'transparent',
-  //             weight: 1
-  //         }
-  //         return obj
-  //     },
-  //     onEachFeature: function (feature, layer) {
-  //         var title = feature.properties.name + '-'+ feature.properties.cnName + '情报区'
-  //         var opt = {
-  //             permanent: true
-  //         }
-  //         layer.bindTooltip(title, opt)
-  //         layer.closeTooltip();
-  //     }
-  // }).on('add', function () {
-  //     controlMapsFunc(firMap)
-  // })
-  // laysersMap.push(firMap)
+  // var firMap = L.tileLayer.wms('http://192.168.243.67:3619/geoserver/gwc/service/wms',{layers: 'china-osm:fir',format:'image/png8'}).on("add", function() {
+    // controlMapsFunc(waypointMap);
+  // });
+
   // 机场图标
   var airportIcon = L.icon({
     iconUrl: "img/airport.png",
@@ -257,9 +200,11 @@ var initMap = (function() {
   var airpointMap = L.geoJSON(airpoint, {
     // 添加机场图标
     pointToLayer: function(geoJsonPoint, latlng) {
-      return L.marker(latlng, {
-        icon: airportIcon
-      });
+      if(geoJsonPoint.properties.type!='军用机场'&& geoJsonPoint.properties.type!='军用备降机场'){
+        return L.marker(latlng, {
+          icon: airportIcon
+        });
+      }
     },
     style: function(feature) {
       var obj = {
@@ -270,13 +215,15 @@ var initMap = (function() {
       return obj;
     },
     onEachFeature: function(feature, layer) {
-      var title = feature.properties.name;
-      var opt = {
-        permanent: true,
-        className: "apName"
-      };
-      layer.bindTooltip(title, opt);
-      layer.closeTooltip();
+      if(feature.properties.type!='军用机场'&& feature.properties.type!='军用备降机场'){
+        var title = feature.properties.name;
+        var opt = {
+          permanent: true,
+          className: "apName"
+        };
+        layer.bindTooltip(title, opt);
+        layer.closeTooltip();
+      }
     }
   }).on("add", function() {
     controlMapsFunc(airpointMap);
@@ -284,7 +231,6 @@ var initMap = (function() {
   laysersMap.push(airpointMap);
   //跑道
   var flStep = 0;
-  var flightMove;
   var timer = '';
   var runwayMap = L.geoJSON(runway, {
     style: function(feature) {
@@ -300,23 +246,21 @@ var initMap = (function() {
         var opt = {
             permanent: true
         }
+      var opt = {
+        permanent: true,
+        className: "apName"
+      };
       layer._leaflet_id = title;
+      layer.bindTooltip(title, opt);
     }
   }).on("add", function() {
     controlMapsFunc(runwayMap);
-    // console.log(flightAinamtion)
-    //添加航班标记(贵阳龙洞堡机场)
-    // var flightIcon =  L.divIcon({className: 'circle'})
-    // flightMove = L.marker([flightAinamtion[flStep].lat,flightAinamtion[flStep].lon],{
-    //   icon: flightIcon
-    // }).addTo(mymap)
-    //   initAnimation();
+    //初始化机场动画
     initFlightAnimation()
   });
 
   //初始化航班动画
   var initFlightAnimation = function () {
-    var flightIcon =  L.divIcon({className: 'circle'});
     var flights = {};
   //遍历航班动画数据
     $.each(flightAinamtion,function (i,e) {
@@ -375,52 +319,13 @@ var initMap = (function() {
   //合并机场点和跑道
   var airports = L.featureGroup([runwayMap, airpointMap]);
 
-  // 航路点图标
-  var waypointIcon = L.icon({
-    iconUrl: "img/waypoint.png",
-    iconSize: [18, 18]
-  });
   //航路点
-  var waypointMap = L.geoJSON(waypoint, {
-    // 添加机场图标
-    pointToLayer: function(geoJsonPoint, latlng) {
-      return L.marker(latlng, {
-        icon: waypointIcon
-      });
-    },
-    style: function(feature) {
-      var obj = {
-        color: "#32adcc",
-        fillColor: "transparent",
-        weight: 1
-      };
-      return obj;
-    },
-    onEachFeature: function(feature, layer) {
-      if ($.isValidVariable(feature.properties.identifier)) {
-        var title =
-          feature.properties.identifier + "-" + feature.properties.name;
-      } else {
-        var title = feature.properties.name;
-      }
-      var opt = {
-        permanent: true,
-        className: "airwaypoint"
-      };
-      layer.bindTooltip(title, opt);
-      layer.closeTooltip();
-    }
-  }).on("add", function() {
-    controlMapsFunc(waypointMap);
-  });
-  laysersMap.push(waypointMap);
+  // var waypointMap =  L.tileLayer.wms('http://192.168.243.67:3619/geoserver/gwc/service/wms',{layers: 'china-osm:waypoint',format:'image/png8'}).on("add", function() {
+    // controlMapsFunc(waypointMap);
+  // });
   //设置地图中心视角
-  mymap.setView([40.072222, 116.597222], 13);//北京机场
-  // mymap.setView([26.538056,106.801111], 15);//贵阳龙洞堡
-  // mymap.setView([22.310000,113.911667], 15);//香港
+  mymap.setView([30.549072229927816,103.95217360516556], 13);//北京机场
 
-  // 北京机场底图
-  // var airportImg = "";
   //放大缩小控制器
   mymap.on("zoomend", function() {
     controlMapsFunc(laysersMap);
@@ -466,64 +371,13 @@ var initMap = (function() {
       { lat: 39.07222222222222, lng: 117.00722222222221, value: 10 }
     ]
   };
-  
-
-  
-  
-  
-  
-  
-  
   //热力图层
-  var heatLayer = new HeatmapOverlay(cfg)
-    .on("add", function() {
-      $(".video").show();
-    })
-    .on("remove", function() {
-      $(".video").hide();
-    });
+  var heatLayer = new HeatmapOverlay(cfg).on("add", function() {
+    $(".video").show();
+  }).on("remove", function() {
+    $(".video").hide();
+  });
   heatLayer.setData(testData);
-  //加载网络地图
-  var normalm = L.tileLayer.chinaProvider("TianDiTu.Normal.Map", {
-      maxZoom: 18,
-      minZoom: 5
-    }),
-    normala = L.tileLayer.chinaProvider("TianDiTu.Normal.Annotion", {
-      maxZoom: 18,
-      minZoom: 5
-    }),
-    imgm = L.tileLayer.chinaProvider("TianDiTu.Satellite.Map", {
-      maxZoom: 18,
-      minZoom: 5
-    }),
-    imga = L.tileLayer.chinaProvider("TianDiTu.Satellite.Annotion", {
-      maxZoom: 18,
-      minZoom: 5
-    });
-
-  var openmap = L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',{foo: 'bar'}).addTo(mymap)
-
-//   var normal = L.layerGroup([normalm, normala]).addTo(mymap);
-//   var image = L.layerGroup([imgm, imga]).addTo(mymap);
-  //定义图层
-  var baseMapLaysers = {
-    中国: openmap
-  };
-  //添加图层控制
-  var layerControl = L.control.layers(baseMapLaysers);
-  layerControl.addTo(mymap);
-  layerControl.addOverlay(secMap, "扇区");
-  // layerControl.addOverlay(runwayMap, '跑道');
-  layerControl.addOverlay(airports, "机场");
-  layerControl.addOverlay(velocityLayer, "风向图");
-  // layerControl.addOverlay(airwayMap, '航路');
-  layerControl.addOverlay(accMap, "管制区");
-  layerControl.addOverlay(appsectorMap, "进近扇区");
-  layerControl.addOverlay(appterMap, "进近终端区");
-  // layerControl.addOverlay(firMap, '情报区');
-  layerControl.addOverlay(waypointMap, "航路点");
-  layerControl.addOverlay(heatLayer, "热力图");
-  
   //初始化时间选择器
   var currentDate = new Date();
   var startDate = parseInt($.getFullTime(currentDate).substring(0, 8) + "0000");
@@ -581,168 +435,168 @@ var initMap = (function() {
     initHeatAnimation();
   });
   var heatMapData = {
-    201805030000: {
+    201805230000: {
       max: 10,
       data: [
         { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 ,radius:0.1},
-        { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 ,radius:1}
+        { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 ,radius:100}
       ]
     },
-    201805030100: {
+    201805230100: {
       max: 10,
       data: [
         { lat: 41.07222222222222, lng: 117.59722222222221, value: 100 ,radius:0.2},
         { lat: 38.07222222222222, lng: 115.00722222222221, value: 100 ,radius:0.02}
       ]
     },
-    201805030200: {
+    201805230200: {
       max: 10,
       data: [
         { lat: 42.07222222222222, lng: 118.59722222222221, value: 100 },
         { lat: 36.07222222222222, lng: 113.00722222222221, value: 100 }
       ]
     },
-    201805030300: {
+    201805230300: {
       max: 10,
       data: [
         { lat: 45.07222222222222, lng: 120.59722222222221, value: 100 },
         { lat: 30.07222222222222, lng: 110.00722222222221, value: 100 }
       ]
     },
-    201805030400: {
+    201805230400: {
       max: 10,
       data: [
         { lat: 42.07222222222222, lng: 120.59722222222221, value: 100 },
         { lat: 35.07222222222222, lng: 105.00722222222221, value: 100 }
       ]
     },
-    201805030500: {
+    201805230500: {
       max: 10,
       data: [
         { lat: 30.691667, lng: 106.101667, value: 100 },
         { lat: 37.034444, lng: 79.869167, value: 100 }
       ]
     },
-    201805030600: {
+    201805230600: {
       max: 10,
       data: [
         { lat: 31.156944, lng: 107.44, value: 100 },
         { lat: 36.638333, lng: 109.605, value: 100 }
       ]
     },
-    201805030700: {
+    201805230700: {
       max: 10,
       data: [
         { lat: 28.428611, lng: 115.921944, value: 100 },
         { lat: 27.8616672, lng: 109.293333, value: 100 }
       ]
     },
-    201805030800: {
+    201805230800: {
       max: 10,
       data: [
         { lat: 41.266667, lng: 80.228333, value: 100 },
         { lat: 31.589444, lng: 120.319444, value: 100 }
       ]
     },
-    201805030900: {
+    201805230900: {
       max: 10,
       data: [
         { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
         { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
       ]
     },
-    201805031000: {
+    201805231000: {
       max: 10,
       data: [
         { lat: 43.908889, lng: 87.473056, value: 100 },
         { lat: 21.861667, lng: 100.935556, value: 100 }
       ]
     },
-    201805031100: {
+    201805231100: {
       max: 10,
       data: [
         { lat: 36.401667, lng: 94.881667, value: 100 },
         { lat: 30.255, lng: 121.220278, value: 100 }
       ]
     },
-    201805031200: {
+    201805231200: {
       max: 10,
       data: [
         { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
         { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
       ]
     },
-    201805031300: {
+    201805231300: {
       max: 10,
       data: [
         { lat: 35.758333, lng: 107.645, value: 100 },
         { lat: 24.409722, lng: 98.538056, value: 100 }
       ]
     },
-    201805031400: {
+    201805231400: {
       max: 10,
       data: [
         { lat: 38.149444, lng: 85.534444, value: 100 },
         { lat: 28.799444, lng: 104.555556, value: 100 }
       ]
     },
-    201805031500: {
+    201805231500: {
       max: 10,
       data: [
         { lat: 30.523056, lng: 97.14, value: 100 },
         { lat: 40.148333, lng: 94.708333, value: 100 }
       ]
     },
-    201805031600: {
+    201805231600: {
       max: 10,
       data: [
         { lat: 34.276944, lng: 117.999167, value: 100 },
         { lat: 25.644167, lng: 100.324722, value: 100 }
       ]
     },
-    201805031700: {
+    201805231700: {
       max: 10,
       data: [
         { lat: 32.672222, lng: 118.579167, value: 100 },
         { lat: 34.555, lng: 108.63, value: 100 }
       ]
     },
-    201805031800: {
+    201805231800: {
       max: 10,
       data: [
         { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
         { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
       ]
     },
-    201805031900: {
+    201805231900: {
       max: 10,
       data: [
         { lat: 34.600278, lng: 108.916389, value: 100 },
         { lat: 34.431667, lng: 108.728333, value: 100 }
       ]
     },
-    201805032000: {
+    201805232000: {
       max: 10,
       data: [
         { lat: 36.528056, lng: 102.031389, value: 100 },
         { lat: 30.886667, lng: 120.416667, value: 100 }
       ]
     },
-    201805032100: {
+    201805232100: {
       max: 10,
       data: [
         { lat: 28.852778, lng: 105.385556, value: 100 },
         { lat: 46.66, lng: 83.37, value: 100 }
       ]
     },
-    201805032200: {
+    201805232200: {
       max: 10,
       data: [
         { lat: 29.631667, lng: 105.756667, value: 100 },
         { lat: 29.765, lng: 119.658333, value: 100 }
       ]
     },
-    201805032300: {
+    201805232300: {
       max: 10,
       data: [
         { lat: 22.646667, lng: 113.801667, value: 100 },
@@ -768,7 +622,7 @@ var initMap = (function() {
       playAnimation(false);
     }
   };
-  //动画播放
+  //热力图动画播放
   var playAnimation = function(isPlay) {
     var currentValue = $(".range-slider").jRange("getValue");
     var setValue = currentValue * 1 + 100 + "";
@@ -789,6 +643,24 @@ var initMap = (function() {
       clearTimeout(timer);
     }
   };
-  
+
+
+  //定义图层
+  var baseMapLaysers = {
+    中国: openmap
+  };
+  //添加图层控制
+  var layerControl = L.control.layers(baseMapLaysers);
+  layerControl.addTo(mymap);
+  layerControl.addOverlay(secMap, "扇区");
+  layerControl.addOverlay(airports, "机场");
+  layerControl.addOverlay(velocityLayer, "风向图");
+  layerControl.addOverlay(accMap, "管制区");
+  layerControl.addOverlay(appsectorMap, "进近扇区");
+  layerControl.addOverlay(appterMap, "进近终端区");
+  layerControl.addOverlay(heatLayer, "热力图");
+  // layerControl.addOverlay(airwayMap, '航路');
+  // layerControl.addOverlay(firMap, '情报区');
+  // layerControl.addOverlay(waypointMap, "航路点");
 
 })();

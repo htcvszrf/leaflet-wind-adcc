@@ -15,10 +15,10 @@
 <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
 <script src="FileSaver.js-master/src/FileSaver.js"></script>
 <script src="../plugins/jquery/jquery-custom-util.js"></script>
-<script src="json/fir.js"></script>
+<script src="json/runway.js"></script>
 <script>
 
-    console.log(flightAnimation);
+    console.log(runway);
     Array.prototype.distinct = function () {
         var arr = this,
                 i,
@@ -83,47 +83,52 @@
     //        features.push(obj);
     //    })
     //跑道
-    //     $.each(runway.runways.runway, function (i, e) {
-    //         var obj = {};
-    //         obj['type'] = 'Feature';
-    //         obj['properties'] = {};
-    //         obj['properties']['name'] = e.cnName[0];
-    //         obj['geometry'] = {};
-    //         obj['geometry']['type'] = "Polygon";
-    //         var arr = [];
-    //         $.each(JSON.parse(e.geographic[0]), function (j, k) {
-    //             var a = k.split(',')
-    //             var parama = a[0];
-    //             a[0] = a[1] *1;
-    //             a[1] = parama*-1 ;
-    //             arr.push(a)
-    //         })
-    //         obj['geometry']['coordinates'] = [arr.distinct()];
-    //         features.push(obj);
-    //     })
-    // console.log(features);
-    //     $.each(china.chinaBorders.chinaBorder, function (i, e) {
-    //         var obj = {};
-    //         obj['type'] = 'Feature';
-    //         obj['properties'] = {};
-    //         obj['properties']['name'] = e.cnName[0];
-    //         obj['geometry'] = {};
-    //         obj['geometry']['type'] = "Polygon";
-    //         // console.log(JSON.parse(e.geographic[0]))
-    //         var dataArr = JSON.parse(e.geographic[0])
-    //         // console.log(dataArr);
-    //         var newArr = [];
-    //         $.each(dataArr,function(j,k){
-    //             var sarr = k.split(',');
-    //             var param = sarr[0]*-1
-    //             sarr[0] = sarr[1]*1
-    //             sarr[1] = param
-    //             newArr.push(sarr)
-    //         })
-    //         // $.each()
-    //         obj['geometry']['coordinates'] = [newArr];
-    //         features.push(obj);
-    //    })
+          var runwayItem = runway.runways.runway;
+         $.each(runwayItem, function (i, e) {
+             var obj = {};
+             obj['type'] = 'Feature';
+             obj['properties'] = {};
+             obj['properties']['enName'] = e.enName[0];
+             obj['properties']['runwayName'] = e.runwayName[0];
+             if(runwayItem[i].enName[0] == runwayItem[i].enName[0]){
+                 obj['properties']['name'] = e.cnName[0] + e.runwayName[0];
+             }
+             obj['geometry'] = {};
+             obj['geometry']['type'] = "Polygon";
+             var arr = [];
+             $.each(JSON.parse(e.geographic[0]), function (j, k) {
+                 var a = k.split(',')
+                 var parama = a[0];
+                 a[0] = a[1] *1;
+                 a[1] = parama*-1 ;
+                 arr.push(a)
+             })
+             obj['geometry']['coordinates'] = [arr];
+             features.push(obj);
+         })
+     console.log(features);
+//         $.each(china.chinaBorders.chinaBorder, function (i, e) {
+//             var obj = {};
+//             obj['type'] = 'Feature';
+//             obj['properties'] = {};
+//             obj['properties']['name'] = e.cnName[0];
+//             obj['geometry'] = {};
+//             obj['geometry']['type'] = "Polygon";
+//             // console.log(JSON.parse(e.geographic[0]))
+//             var dataArr = JSON.parse(e.geographic[0])
+//             // console.log(dataArr);
+//             var newArr = [];
+//             $.each(dataArr,function(j,k){
+//                 var sarr = k.split(',');
+//                 var param = sarr[0]*-1
+//                 sarr[0] = sarr[1]*1
+//                 sarr[1] = param
+//                 newArr.push(sarr)
+//             })
+//             // $.each()
+//             obj['geometry']['coordinates'] = [newArr];
+//             features.push(obj);
+//        })
 
     /**
      * 计算经纬度
@@ -305,6 +310,7 @@
 //            obj['properties'] = {};
 //            obj['properties']['name'] = e.boundairCode[0];
 //            obj['properties']['boundairReason'] = e.boundairReason[0];
+//            obj['properties']['boundairType'] = e.boundairType[0];
 //            obj['geometry'] = {};
 //            obj['geometry']['type'] = "Polygon";
 //            var arr = [];
@@ -364,10 +370,10 @@
 
 //    console.log(features);
     
-//    var mapObj = {
-//        "type": "FeatureCollection",
-//        "features": features
-//    }
+    var mapObj = {
+        "type": "FeatureCollection",
+        "features": features
+    }
 //    console.log(mapObj);
 //    var newObj = {}
 //    $.each(flightAnimation,function (i,e) {
@@ -392,10 +398,10 @@
         var blob = new Blob([JSON.stringify(data)], {
             type: ""
         });
-        saveAs(blob, "airway.js");
+        saveAs(blob, "runway.js");
 
     }
-//        downloadJson(mapObj);
+        downloadJson(mapObj);
 </script>
 
 </html>

@@ -1,10 +1,6 @@
-var  restrictarea ={
-    "restrictareas"
-:
-    {
-        "restrictarea"
-    :
-        [
+var restrictarea = {
+    "restrictareas": {
+        "restrictarea": [
             {
                 "id": [
                     "79"
