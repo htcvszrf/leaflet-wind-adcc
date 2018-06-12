@@ -2,12 +2,12 @@ var initMap = (function () {
     var ipHost = "http://192.168.243.41:7070/geoserver/gwc/service/wms";
     var flightIphost = "http://192.168.243.41:28081/AIRPORT/FlightDynamicData";//飞行航班数据ip
     var unFlyflightIphost = "http://192.168.243.41:28081/AIRPORT/NonTakeoffFlightData";//飞行航班数据ip
-    var flightMoveArr = [];//飞行航班图层
-    var unFlightMove = [];//未起飞飞行航班图层
-    var runwayStyle = [];
+    var flightMoveArr = [];//保存飞行航班图层
+    var unFlightMove = [];//保存未起飞飞行航班图层
     var isFlightRefresh = true;//飞行航班数据是否刷新
     var refreshTime = 1000 * 4;//飞行航班数据刷新时间
-    var timer;//定时器
+    var flyTimer;//已起飞航班定时器
+    var unFlyTimer;//未起飞航班定时器
     var mainMap = L.map("main", {
         crs: L.CRS.EPSG4326,
     });
@@ -19,6 +19,7 @@ var initMap = (function () {
         southWest:mainMap.getBounds()['_southWest'],
         // zoomNum:mainMap.getZoom()
     };//当前视图范围以及缩放等级
+    //地图缩放事件
     mainMap.on("zoomend",function(){
         // 更新边界数据
         bound = {
@@ -193,7 +194,7 @@ var initMap = (function () {
      * @param isNext
      * @param time
      */
-    var startTimer = function (func,isNext,lonData, time) {
+    var startTimer = function (func,isNext,lonData, time,timer) {
         // 清除定时器
         clearTimeout(timer);
         if (typeof func == "function") {
@@ -215,25 +216,25 @@ var initMap = (function () {
                 success:function(data){
                     if($.isValidObject(data)&&data.status == 200){
                         if($.isValidObject(data.flights)) {
+                            //移除上次绘制图层
                             if(flightMoveArr.length>0){
                                 flightMove.removeFlight(flightMoveArr);
                             }
+                            //绘制航班图层
                             flightMoveArr = flightMove.drawFlyFlight(data.flights,mainMap);
-                            var flightCircle = L.circleMarker([100.185, 24.20138888888889], {
-                                radius: 100
-                            }).addTo(mainMap);
+                            //开启定时
                             if(isFlightRefresh){
-                                startTimer(getFlightData,isFlightRefresh, bound,refreshTime);
+                                startTimer(getFlightData,isFlightRefresh, bound,refreshTime,flyTimer);
                             }
                         }
                     }else if(data.status == 500){
-                        startTimer(getFlightData,isFlightRefresh, bound,refreshTime);
+                        startTimer(getFlightData,isFlightRefresh, bound,refreshTime,flyTimer);
                         console.warn(data.error.message)
                     }
                 },
                 error: function (xhr, status, error) {
-                    clearInterval(timer);
-                    startTimer(getFlightData,isFlightRefresh, bound,refreshTime);
+                    clearInterval(flyTimer);
+                    startTimer(getFlightData,isFlightRefresh, bound,refreshTime,flyTimer);
                     console.warn(error)
                 }
             })
@@ -248,28 +249,34 @@ var initMap = (function () {
                url: unFlyflightIphost,
                data: dataReusult,
                type: "post",
-               // dataType: "JSONP",
                success:function(data){
                    if($.isValidObject(data)&&data.status == 200){
                        if($.isValidObject(data.airports))
+                           //移除上次绘制的未起飞航班图层
                            if(unFlightMove.length>0) {
                                $.each(unFlightMove,function (i,e) {
                                    flightMove.removeFlight(e);
                                })
                            }
+                       //遍历机场绘制每个机场的未起飞航班数据
                        $.each(data.airports,function (i,e) {
+                           //绘制未起飞航班
                            unFlightMove.push(flightMove.drawUnFlyFlight(e,mainMap).unFlyFlightArr);
-                           runwayStyle.push(flightMove.drawRunway(e,AipMap.layersGroup.runwayMap));
+                           //跑道样式绘制
+                           flightMove.drawRunway(e,AipMap.layersGroup.runwayMap);
                        });
-                       console.log(unFlightMove);
                        if(isFlightRefresh){
-                           startTimer(getUnFlyFlightData,isFlightRefresh,bound, refreshTime);
+                           startTimer(getUnFlyFlightData,isFlightRefresh,bound, refreshTime,unFlyTimer);
                        }
                    }else if(data.status == 500){
+                       clearTimeout(unFlyTimer);
+                       startTimer(getUnFlyFlightData,isFlightRefresh,bound, refreshTime,unFlyTimer);
                        console.warn(data.error.message)
                    }
                },
                error: function (xhr, status, error) {
+                   clearTimeout(unFlyTimer);
+                   startTimer(getUnFlyFlightData,isFlightRefresh,bound, refreshTime,unFlyTimer);
                    // setTimeout(getUnFlyFlightData(false,bound), 1000 * 30 * 5);
                    console.warn(error)
                }
