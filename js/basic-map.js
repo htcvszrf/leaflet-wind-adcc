@@ -1,24 +1,72 @@
 var initMap = (function () {
     var ipHost = "http://192.168.243.41:7070/geoserver/gwc/service/wms";
+    var flightIphost = "http://192.168.243.41:28081/AIRPORT/FlightDynamicData";//飞行航班数据ip
+    var unFlyflightIphost = "http://192.168.243.41:28081/AIRPORT/NonTakeoffFlightData";//飞行航班数据ip
+    var flightMoveArr = [];//飞行航班图层
+    var unFlightMove = [];//未起飞飞行航班图层
+    var runwayStyle = [];
+    var isFlightRefresh = true;//飞行航班数据是否刷新
+    var refreshTime = 1000 * 4;//飞行航班数据刷新时间
+    var timer;//定时器
     var mainMap = L.map("main", {
         crs: L.CRS.EPSG4326,
     });
     //设置地图中心视角
-    mainMap.setView([30.549072229927816, 103.95217360516556], 6);//双流机场
-    var openmap = L.tileLayer.wms(ipHost, {layers: 'chinaosm:osm', format: 'image/png8'}).addTo(mainMap);
+    mainMap.setView([37.549072229927816, 111.95217360516556], 6); //双流机场
+    //绑定地图缩放事件
+    var bound = {
+        northEast:mainMap.getBounds()['_northEast'],
+        southWest:mainMap.getBounds()['_southWest'],
+        // zoomNum:mainMap.getZoom()
+    };//当前视图范围以及缩放等级
+    mainMap.on("zoomend",function(){
+        // 更新边界数据
+        bound = {
+            northEast:mainMap.getBounds()['_northEast'],
+            southWest:mainMap.getBounds()['_southWest'],
+            // zoomNum:mainMap.getZoom()
+        };
+        //更新缩放等级
+        zoomNum = mainMap.getZoom();
+        // getUnFlyFlightData(false,bound);
+        console.log(bound)
+        console.log(zoomNum)
+    })
+    //绑定地图拖拽事件
+    mainMap.on("moveend",function(){
+        //更新边界数据
+        bound = {
+            northEast:mainMap.getBounds()['_northEast'],
+            southWest:mainMap.getBounds()['_southWest'],
+            // zoomNum:mainMap.getZoom()
+        };
+        //更新缩放等级
+        zoomNum = mainMap.getZoom();
+        // getUnFlyFlightData(false,bound);
+        console.log(bound)
+        console.log(zoomNum)
+    })
+    // var flightCircle = L.circle([37.549072229927816, 111.95217360516556], {
+    //     radius: 100,
+    //     color: '#FF0000'
+    // }).addTo(mainMap);
+    var openmap = L.tileLayer.wms(ipHost, {
+        layers: 'chinaosm:osm',
+        format: 'image/png8'
+    }).addTo(mainMap);
     //中国轮廓图
-    L.geoJSON(china, {
+    var chinaBorder = L.geoJSON(china, {
         style: function (feature) {
             return {
                 color: "#c5c5c5",
-                fillColor: "#ff000000",
+                fillColor: "transparent",
                 weight: 0.8
                 // fillOpacity:1
             };
         }
     }).addTo(mainMap);
     //边境地图
-    L.geoJSON(bd4, {
+    var border4 = L.geoJSON(bd4, {
         style: function (feature) {
             return {
                 color: "#5c5c5c",
@@ -29,7 +77,7 @@ var initMap = (function () {
         }
     }).addTo(mainMap);
     //边境地图
-    L.geoJSON(bd3, {
+    var border3 = L.geoJSON(bd3, {
         style: function (feature) {
             return {
                 color: "#5c5c5c",
@@ -49,11 +97,11 @@ var initMap = (function () {
         if ($.isArray(obj)) {
             //遍历每个图层
             $.each(obj, function (index, e) {
-                layerShowRule(e,zoomIndex)
+                layerShowRule(e, zoomIndex)
             });
         } else {
             // 单图层
-            layerShowRule(obj,zoomIndex)
+            layerShowRule(obj, zoomIndex)
         }
     };
     /**
@@ -61,11 +109,11 @@ var initMap = (function () {
      * @param layer
      * @param zoomIndex
      */
-    var layerShowRule = function (layer ,zoomIndex) {
+    var layerShowRule = function (layer, zoomIndex) {
         //排除航路和航路点图层
-        if(layer['_leaflet_id'] != 'airwayMap' && layer['_leaflet_id'] != 'waypointMap'){
+        if (layer['_leaflet_id'] != 'airwayMap' && layer['_leaflet_id'] != 'waypointMap') {
             //管制区情报区显示规则
-            if(layer['_leaflet_id'] == 'firMap'||layer['_leaflet_id'] == 'accMap'){
+            if (layer['_leaflet_id'] == 'firMap' || layer['_leaflet_id'] == 'accMap') {
                 if (zoomIndex * 1 <= 7) {
                     // 缩放层级小于7  显示文字
                     if (mainMap.hasLayer(layer)) {
@@ -81,7 +129,7 @@ var initMap = (function () {
                         });
                     }
                 }
-            }else{
+            } else {
                 // 缩放层级大于7 显示文字
                 if (zoomIndex * 1 >= 7) {
                     if (mainMap.hasLayer(layer)) {
@@ -101,7 +149,132 @@ var initMap = (function () {
             }
         }
     }
+    //定义图层
+    var baseMapLaysers = {
+        中国: openmap
+    };
+    /**
+     * 设置图层控制
+     */
+    var setLayerControl = function () {
+        //获取aip图层组
+        var layers = AipMap.layersGroup;
+        var layersArr = [];
+        //绑定到图层添加事件控制title显示
+        $.each(layers, function (index, aipLayer) {
+            aipLayer.on("add", function () {
+                controlMapsFunc(aipLayer)
+            });
+            layersArr.push(aipLayer);
+        });
+        //绑定到缩放事件控制title显示
+        mainMap.on("zoomend", function () {
+            controlMapsFunc(layersArr)
+        })
+        //添加图层控制
+        var layerControl = L.control.layers(baseMapLaysers);
+        layerControl.addTo(mainMap);
+        layerControl.addOverlay(layers.secMap, "扇区");
+        var airports = L.featureGroup([layers.runwayMap, layers.airpointMap]);
+        layerControl.addOverlay(airports, "机场");
+        // layerControl.addOverlay(velocityLayer, "风向图");
+        layerControl.addOverlay(layers.accMap, "管制区");
+        layerControl.addOverlay(layers.appsectorMap, "进近扇区");
+        layerControl.addOverlay(layers.appterMap, "进近终端区");
+        // layerControl.addOverlay(heatLayer, "热力图");
+        layerControl.addOverlay(layers.airwayMap, '航路');
+        layerControl.addOverlay(layers.firMap, '情报区');
+        layerControl.addOverlay(layers.waypointMap, "航路点");
+    }
 
+    /**
+     * 定时器
+     * @param func
+     * @param isNext
+     * @param time
+     */
+    var startTimer = function (func,isNext,lonData, time) {
+        // 清除定时器
+        clearTimeout(timer);
+        if (typeof func == "function") {
+            timer = setTimeout(function () {
+                func(isNext,lonData);
+            }, time);
+        }
+    };
+    /**
+     * 获取飞行航班数据
+     * @param isFlightRefresh
+     */
+    var getFlightData = function(isFlightRefresh,lonData){
+        var dataReusult = JSON.stringify(lonData);
+            $.ajax({
+                url: flightIphost,
+                type: "post",
+                data: dataReusult,
+                success:function(data){
+                    if($.isValidObject(data)&&data.status == 200){
+                        if($.isValidObject(data.flights)) {
+                            if(flightMoveArr.length>0){
+                                flightMove.removeFlight(flightMoveArr);
+                            }
+                            flightMoveArr = flightMove.drawFlyFlight(data.flights,mainMap);
+                            var flightCircle = L.circleMarker([100.185, 24.20138888888889], {
+                                radius: 100
+                            }).addTo(mainMap);
+                            if(isFlightRefresh){
+                                startTimer(getFlightData,isFlightRefresh, bound,refreshTime);
+                            }
+                        }
+                    }else if(data.status == 500){
+                        startTimer(getFlightData,isFlightRefresh, bound,refreshTime);
+                        console.warn(data.error.message)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    clearInterval(timer);
+                    startTimer(getFlightData,isFlightRefresh, bound,refreshTime);
+                    console.warn(error)
+                }
+            })
+    }
+    /**
+     * 获取未起飞航班数据
+     * @param isFlightRefresh
+     */
+    var getUnFlyFlightData = function(isFlightRefresh,data){
+        var dataReusult = JSON.stringify(data);
+           $.ajax({
+               url: unFlyflightIphost,
+               data: dataReusult,
+               type: "post",
+               // dataType: "JSONP",
+               success:function(data){
+                   if($.isValidObject(data)&&data.status == 200){
+                       if($.isValidObject(data.airports))
+                           if(unFlightMove.length>0) {
+                               $.each(unFlightMove,function (i,e) {
+                                   flightMove.removeFlight(e);
+                               })
+                           }
+                       $.each(data.airports,function (i,e) {
+                           unFlightMove.push(flightMove.drawUnFlyFlight(e,mainMap).unFlyFlightArr);
+                           runwayStyle.push(flightMove.drawRunway(e,AipMap.layersGroup.runwayMap));
+                       });
+                       console.log(unFlightMove);
+                       if(isFlightRefresh){
+                           startTimer(getUnFlyFlightData,isFlightRefresh,bound, refreshTime);
+                       }
+                   }else if(data.status == 500){
+                       console.warn(data.error.message)
+                   }
+               },
+               error: function (xhr, status, error) {
+                   // setTimeout(getUnFlyFlightData(false,bound), 1000 * 30 * 5);
+                   console.warn(error)
+               }
+           })
+    }
     //气象数据显示暂时屏蔽
     // //风向图层
     // var velocityLayer = L.velocityLayer({
@@ -415,48 +588,13 @@ var initMap = (function () {
     //     clearTimeout(timer);
     //   }
     // };
-
-    //定义图层
-    var baseMapLaysers = {
-        中国: openmap
-    };
-    /**
-     * 设置图层控制
-     */
-    var setLayerControl = function () {
-        //获取aip图层组
-        var layers = AipMap.layersGroup;
-        var layersArr = [];
-        //绑定到图层添加事件控制title显示
-        $.each(layers, function (index, aipLayer) {
-                aipLayer.on("add", function () {
-                    controlMapsFunc(aipLayer)
-                });
-                layersArr.push(aipLayer);
-        });
-        //绑定到缩放事件控制title显示
-        mainMap.on("zoomend", function () {
-            controlMapsFunc(layersArr)
-        })
-        //添加图层控制
-        var layerControl = L.control.layers(baseMapLaysers);
-        layerControl.addTo(mainMap);
-        layerControl.addOverlay(layers.secMap, "扇区");
-        var airports = L.featureGroup([layers.runwayMap, layers.airpointMap]);
-        layerControl.addOverlay(airports, "机场");
-        // layerControl.addOverlay(velocityLayer, "风向图");
-        layerControl.addOverlay(layers.accMap, "管制区");
-        layerControl.addOverlay(layers.appsectorMap, "进近扇区");
-        layerControl.addOverlay(layers.appterMap, "进近终端区");
-        // layerControl.addOverlay(heatLayer, "热力图");
-        layerControl.addOverlay(layers.airwayMap, '航路');
-        layerControl.addOverlay(layers.firMap, '情报区');
-        layerControl.addOverlay(layers.waypointMap, "航路点");
-    }
     return {
         init: function () {
             setLayerControl();
-        }
+            getFlightData(isFlightRefresh,bound);
+            getUnFlyFlightData(isFlightRefresh,bound);
+        },
+        mainMaps:mainMap
     }
 })();
 $(document).ready(function () {

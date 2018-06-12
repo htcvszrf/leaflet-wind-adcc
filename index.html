@@ -10,81 +10,7 @@
     <link rel="stylesheet" href="plugins/leaflet-wind/leaflet-velocity.css">
     <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" href="plugins/jquery-range/jquery.range.css">
-    <style>
-        html,
-        body,
-        #main {
-            width: 100%;
-            height: 100%;
-            margin: auto;
-            background: #f2efe9;
-        }
-
-        .fir {
-            color: #7058a3;
-        }
-
-        .sector {
-            color: #0033ff;
-        }
-
-        .appsector {
-            color: #59b9c6;
-        }
-
-        .appter {
-            color: #1e50a2;
-        }
-
-        .acc {
-            color: #165e83;
-        }
-
-        .apName {
-            color: #0033ff;
-        }
-
-        .leaflet-tooltip {
-            background-color: transparent;
-            box-shadow: none;
-            border: none;
-        }
-
-        .leaflet-tooltip:before {
-            border-color: transparent;
-        }
-        .slider-container {
-            position: fixed;
-            bottom: 5%;
-            left: 5%;
-            width: 80%;
-            height: 10px;
-            display: block !important;
-        }
-        .circle{
-            display: inline-block;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 1px solid #3c763d;
-
-        }
-        .video {
-            position: fixed;
-            bottom: 5.5%;
-            left: 3%;
-            width: 80%;
-            height: 10px;
-            color: snow;
-            cursor: pointer;
-            z-index: 999999999 !important;
-            display: none;
-        }
-
-        .pointer-label {
-            font-size: 12px !important;
-        }
-    </style>
+    <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
@@ -94,15 +20,20 @@
         <span class="glyphicon glyphicon-play play-heat" isPlay=false></span>
         <input class="range-slider" type="hidden" value="0" />
     </div>
+    <!--jquery-->
     <script src="plugins/jquery/jquery.min.js"></script>
     <script src="plugins/jquery/jquery-custom-util.js"></script>
+    <!--jquery-range-->
     <script src="plugins/jquery-range/jquery.range.js"></script>
+    <!--bootstrap-->
     <script src="plugins/bootstrap/js/bootstrap.js"></script>
+    <!--leaflet-->
     <script src="plugins/leaflet/leaflet-src.js"></script>
+    <script src="plugins/leaflet-rotatedMarker/leaflet.rotatedMarker.js"></script>
     <script src="plugins/leaflet-wind/leaflet-velocity.js"></script>
+    <!--heatmap-->
     <script src="plugins/heat-map/heatmap.js"></script>
     <script src="plugins/heat-map/leaflet-heatmap.js"></script>
-    <script src="plugins/leaflet-wind/leaflet-velocity.js"></script>
 
     <!--中国边境数据-->
     <script src="data/china.js"></script>
@@ -126,6 +57,8 @@
     <script src="data/fir.js"></script>
     <!--风向数据-->
     <script src="data/wind.js"></script>
+    <!--航班动画-->
+    <script src="js/flight-move.js"></script>
     <!--主函数-->
     <script src="js/basic-map.js"></script>
     <!--情报数据绘制-->

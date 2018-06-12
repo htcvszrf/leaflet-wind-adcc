@@ -1,0 +1,74 @@
+html, body, #main {
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    background: #f2efe9;
+}
+/*情报区title样式*/
+.fir {
+    color: #7058a3;
+}
+/*扇区title样式*/
+.sector {
+    color: #0033ff;
+}
+/*进近扇区title样式*/
+.appsector {
+    color: #59b9c6;
+}
+/*进近终端区区title样式*/
+.appter {
+    color: #1e50a2;
+}
+/*管制区title样式*/
+.acc {
+    color: #165e83;
+}
+/*机场文字样式*/
+.apName {
+    color: #0033ff;
+}
+
+.leaflet-tooltip {
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+}
+
+.leaflet-tooltip:before {
+    border-color: transparent;
+}
+
+.slider-container {
+    position: fixed;
+    bottom: 5%;
+    left: 5%;
+    width: 80%;
+    height: 10px;
+    display: block !important;
+}
+
+.circle {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid #3c763d;
+
+}
+
+.video {
+    position: fixed;
+    bottom: 5.5%;
+    left: 3%;
+    width: 80%;
+    height: 10px;
+    color: snow;
+    cursor: pointer;
+    z-index: 999999999 !important;
+    display: none;
+}
+
+.pointer-label {
+    font-size: 12px !important;
+}

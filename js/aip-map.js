@@ -204,7 +204,7 @@ var AipMap = function () {
             var title = feature.properties.name + "管制区";
             var opt = {
                 permanent: true,
-                className: ""
+                className: "acc"
             };
             layer.bindTooltip(title, opt);
             layer.closeTooltip();
@@ -216,6 +216,5 @@ var AipMap = function () {
 
     return{
         layersGroup:layersGroup,
-
     }
 }();

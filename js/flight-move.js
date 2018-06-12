@@ -2,26 +2,28 @@
  * Created by caowei on 2018/5/25.
  */
 var flightMove = function () {
-    //未起飞航班数据组
-    var unFlyFlightArr = [];
     /**
      * 绘制未起飞航班
-     * @param {航班数据} data
+     * @param flightData
+     * @returns {Array} 未起飞航班图层组
      */
-    var drawUnFlyFlight = function (flightData) {
-        var flights = flightData;
+    var drawUnFlyFlight = function (flightData,basicMap) {
+        //未起飞航班数据组
+        var unFlyFlightArr = [];
+        var distanceArr = [];
+        var flights = flightData.flights;
         $.each(flights, function (index,flight ) {
             //判断航班状态(默认停止)设置圆形颜色
-            var flightColor = 'black';
+            var flightColor = '#000000';
             //设置圆形半径(默认为10)
-            var radius = 10;
+            var radius = 100;
                 if (flight.vec == 0){
                 flightColor = 'black';
-                radius = 10
+                radius = 100
 
             }else {
                 //根据速度设置圆形半径
-                radius = flight.vec / 20;
+                radius = flight.vec*1 / 20;
                 //加速
                 if (flight.speedStatus == 'accelerate') {
                     flightColor = 'red';
@@ -36,7 +38,7 @@ var flightMove = function () {
                 }
             }
             //初始化航班圆形
-            var flightCircle = L.circle([flight.lon, fligth.lat], {
+            var flightCircle = L.circle([flight.lat,flight.lon], {
                 radius: radius,
                 color: flightColor
             });
@@ -49,12 +51,35 @@ var flightMove = function () {
             };
             //绑定title
             flightCircle.bindTooltip(title, opt);
+            //遍历跑道
+            // var runways = flightData.runway;
+            // $.each(runways,function (index,rwy) {
+            //     if(rwy.inRunway){
+            //         var distanceLine = L.polyline(rwy.runwayLatLon, {color: 'red',weight:10}).addTo(map);
+            //         distanceArr.push(distanceLine)
+            //     }
+            // })
             //判断航班是否进入跑道
-            if($.isValidObject(flight.runwatStatus)){
-                //未完成
-            }
-            unFlyFlightArr.push(flight);
+            // var runwayStatus = flightData.runwayStatus
+            // if(runwayStatus.isInRunway){
+            //     //定义航班到跑道末端距离
+            //     flightCircle.distance = L.polyline(runwayStatus.runwayLatLon, {color: '#00ffff',weight:20}).addTo(map);
+            //     //修改图层id
+            //     flightCircle.distance['_leaflet_id'] = runwayStatus.runwayName + "Distance";
+            //     const distanceTitle = "Distance: " + runwayStatus.runwayDistance;
+            //     const distanceOpt = {
+            //         permanent: true,
+            //     };
+            //     //绑定title
+            //     flightCircle.distance.bindTooltip(distanceTitle, distanceOpt);
+            // }
+            flightCircle.addTo(basicMap)
+            unFlyFlightArr.push(flightCircle);
         })
+        return {
+            distanceArr:distanceArr,
+            unFlyFlightArr:unFlyFlightArr
+        }
     }
     /**
      * 移除航班图层
@@ -62,23 +87,34 @@ var flightMove = function () {
      */
     var removeFlight = function (flightArr) {
         $.each(flightArr, function (index, item) {
+            //移除飞机
             item.remove();
-            flightArr.remove(index);
+            if($.isValidObject(item.distance)){
+                //移除距离跑道末端距离
+                item.distance.remove();
+            }
         })
     }
 
-    //飞行航班数据
-    var flyFlightArr = [];
     /**
      * 绘制空中航班数据
-     * @param {航班数据} flightData
+     * @param flightData 航班数据
+     * @returns {Array} 航班图层组
      */
-    var drawFlyFlight = function(flightData){
+    var drawFlyFlight = function(flightData,basicMap){
+        const flyFlightArr = [];
         var fligths = flightData;
         $.each(fligths,function(index,flight){
-            var flightCircle = L.circle([flight.lon, flight.lat], {
-                radius: radius,
-                color: 'yellow'
+            //初始化飞行航班(tubiao)
+            var flightCircle = L.icon({
+                iconUrl: "img/airport.png",
+                iconSize: [18, 18]
+            });
+            //初始化飞行航班
+            var flightCircle = L.marker([flight.lat,flight.lon], {
+                icon: flightCircle,
+                rotationAngle: 45,//旋转角度
+                rotationOrigin:'center center'//旋转中心轴
             });
             //更新航班id到图层id
             flightCircle['_leaflet_id'] = flight.flightId;
@@ -88,16 +124,48 @@ var flightMove = function () {
                 permanent: true,
             };
             flightCircle.bindTooltip(title, opt);
-            flyFlightArr.push(flight);
+            flightCircle.addTo(basicMap)
+            flyFlightArr.push(flightCircle);
         })
-
+        return flyFlightArr;
     }
-
-    var setRunwayStyle = function (runwayId,runways) {
-        $.each(runways,function (index,runway) {
-                if(runway['_leaflet_id'] == runwayId){
-
+    /**
+     * 设置机场跑道样式
+     * @param airports 航班数据
+     * @param runways 跑道图层组
+     */
+    var drawRunway = function (airports,runways) {
+        //获机场名称
+        var apName = airports.apName;
+        //获取机场跑道集合
+        var runwayArr = airports.runway
+        // 遍历跑道集合
+        $.each(runwayArr,function (indexNum,runwayStatus) {
+            //遍历跑道图层集合
+            $.each(runways,function (index,runway) {
+                //匹配跑道
+                if(runway['_leaflet_id'] == apName + runwayStatus.runwayName){
+                    //判断跑道是否被占用
+                        if(runwayStatus.isOccupy){
+                            //占用红色
+                            runway.setStyle({
+                                color:'#ff0000'
+                            })
+                        }else{
+                            //未占用绿色
+                            runway.setStyle({
+                                color:'#00ff00'
+                            })
+                        }
                 }
+            })
         })
+
     }
-}()
+    return{
+        drawUnFlyFlight:drawUnFlyFlight,
+        removeFlight:removeFlight,
+        drawFlyFlight:drawFlyFlight,
+        drawRunway:drawRunway
+    }
+}();
