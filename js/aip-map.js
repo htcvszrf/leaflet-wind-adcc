@@ -80,7 +80,7 @@ var AipMap = function () {
             var title = feature.properties.name + feature.properties.verticalScope;
             var opt = {
                 permanent: true,
-                className: "appsector"
+                className: "appsector",
             };
             layer.bindTooltip(title, opt);
             layer.closeTooltip();
@@ -96,9 +96,10 @@ var AipMap = function () {
             if (geoJsonPoint.properties.type != '军用机场' && geoJsonPoint.properties.type != '军用备降机场') {
                 return L.marker(latlng, {
                     icon: L.icon({
-                        iconUrl: "img/airport.png",
-                        iconSize: [18, 18]
-                    })
+                        iconUrl: "img/ap.png",
+                        iconSize: [18, 18],
+                    }),
+                    rotationAngle: -45//图标旋转角
                 });
             }
         },
@@ -136,16 +137,14 @@ var AipMap = function () {
             return obj;
         },
         onEachFeature: function (feature, layer) {
-            var title = feature.properties.name
-            var opt = {
-                permanent: true
-            }
+            var title = feature.properties.runwayName
             var opt = {
                 permanent: true,
+                direction:'top',
                 className: "apName"
             };
             // 更新图层id
-            layer._leaflet_id = title;
+            layer._leaflet_id = feature.properties.name;
             //绑定title
             layer.bindTooltip(title, opt);
         }

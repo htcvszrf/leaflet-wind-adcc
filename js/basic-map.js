@@ -10,7 +10,11 @@ var initMap = (function () {
     var unFlyTimer;//未起飞航班定时器
     var mainMap = L.map("main", {
         crs: L.CRS.EPSG4326,
+        minZoom:3
     });
+
+
+    // var airwayMap = L.tileLayer.wms("http://192.168.243.67:3619/geoserver/gwc/service/wms", {layers: 'china-osm:ne_10m_populated_places', format: 'image/png8'}).addTo(mainMap);
     //设置地图中心视角
     mainMap.setView([37.549072229927816, 111.95217360516556], 6); //双流机场
     //绑定地图缩放事件
@@ -47,13 +51,10 @@ var initMap = (function () {
         console.log(bound)
         console.log(zoomNum)
     })
-    // var flightCircle = L.circle([37.549072229927816, 111.95217360516556], {
-    //     radius: 100,
-    //     color: '#FF0000'
-    // }).addTo(mainMap);
     var openmap = L.tileLayer.wms(ipHost, {
         layers: 'chinaosm:osm',
-        format: 'image/png8'
+        format: 'image/png8',
+
     }).addTo(mainMap);
     //中国轮廓图
     var chinaBorder = L.geoJSON(china, {
@@ -166,6 +167,9 @@ var initMap = (function () {
             aipLayer.on("add", function () {
                 controlMapsFunc(aipLayer)
             });
+            aipLayer.on("zoomend", function () {
+                aipLayer(layersArr)
+            })
             layersArr.push(aipLayer);
         });
         //绑定到缩放事件控制title显示

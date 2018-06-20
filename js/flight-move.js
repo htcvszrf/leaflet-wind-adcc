@@ -42,36 +42,40 @@ var flightMove = function () {
                 color: flightColor
             });
             //更新航班id到图层id
-            flightCircle['_leaflet_id'] = flight.flightId;
+            flightCircle['_leaflet_id'] = flight.flightid;
             //显示航班信息
-            var title = 'Flight: ' + flight.flightId + "<br>" + "speed: " + flight.vec;
+            var title = 'Flight: ' + flight.flightid + "<br>" + "speed: " + flight.vec;
             var opt = {
                 permanent: true,
             };
             //绑定title
             flightCircle.bindTooltip(title, opt);
             //遍历跑道
-            // var runways = flightData.runway;
-            // $.each(runways,function (index,rwy) {
-            //     if(rwy.inRunway){
-            //         var distanceLine = L.polyline(rwy.runwayLatLon, {color: 'red',weight:10}).addTo(map);
-            //         distanceArr.push(distanceLine)
-            //     }
-            // })
+            var runways = flightData.runway;
+            $.each(runways,function (index,rwy) {
+                if(rwy.occupy){
+                    var distanceLine = L.polyline(rwy.runwayLatLon, {color: 'red',weight:10}).addTo(map);
+                    distanceArr.push(distanceLine)
+                }
+            })
             //判断航班是否进入跑道
-            // var runwayStatus = flightData.runwayStatus
-            // if(runwayStatus.isInRunway){
-            //     //定义航班到跑道末端距离
-            //     flightCircle.distance = L.polyline(runwayStatus.runwayLatLon, {color: '#00ffff',weight:20}).addTo(map);
-            //     //修改图层id
-            //     flightCircle.distance['_leaflet_id'] = runwayStatus.runwayName + "Distance";
-            //     const distanceTitle = "Distance: " + runwayStatus.runwayDistance;
-            //     const distanceOpt = {
-            //         permanent: true,
-            //     };
-            //     //绑定title
-            //     flightCircle.distance.bindTooltip(distanceTitle, distanceOpt);
-            // }
+            var flightsData = flightData.flights;
+            $.each(flightsData,function (index,flihgt) {
+                for(var i=0;i<flight.length;i++){
+                    if(flihgt[i].isRunway){
+                        //定义航班到跑道末端距离
+                        flightCircle.distance = L.polyline(flihgt[i].runwayLatLon, {color: '#00ffff',weight:20}).addTo(map);
+                        //修改图层id
+                        flightCircle.distance['_leaflet_id'] = flihgt[i].runwayName + "Distance";
+                        const distanceTitle = "Distance: " + flihgt[i].runwayDistance;
+                        const distanceOpt = {
+                            permanent: true,
+                        };
+                        //绑定title
+                        flightCircle.distance.bindTooltip(distanceTitle, distanceOpt);
+                    }
+                }
+            })
             flightCircle.addTo(basicMap)
             unFlyFlightArr.push(flightCircle);
         })
@@ -112,13 +116,13 @@ var flightMove = function () {
             //初始化飞行航班
             var flightCircle = L.marker([flight.lat, flight.lon], {
                 icon: flightCircle,
-                rotationAngle: 45,//旋转角度
+                rotationAngle: flight.vector,//旋转角度
                 rotationOrigin: 'center center'//旋转中心轴
             });
             //更新航班id到图层id
-            flightCircle['_leaflet_id'] = flight.flightId;
+            flightCircle['_leaflet_id'] = flight.flightid;
             //显示航班信息
-            var title = 'Flight: ' + flight.flightId + "<br>" + "speed: " + flight.vec + "<br>" + "height: " + flight.height + "<br>" + "Time:"+ flight.time;
+            var title = 'Flight: ' + flight.flightid + "<br>" + "speed: " + flight.vec + "<br>" + "height: " + flight.height + "<br>" + "Time:"+ flight.time;
             var opt = {
                 permanent: true,
             };
