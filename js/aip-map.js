@@ -118,6 +118,8 @@ var AipMap = function () {
                     permanent: true,
                     className: "apName"
                 };
+                // 更新图层id
+                layer['_leaflet_id'] = feature.properties.identifier;
                 layer.bindTooltip(title, opt);
                 layer.closeTooltip();
             }
@@ -144,7 +146,7 @@ var AipMap = function () {
                 className: "apName"
             };
             // 更新图层id
-            layer._leaflet_id = feature.properties.name;
+            layer._leaflet_id = feature.properties.enName + '_' + feature.properties.runwayName;
             //绑定title
             layer.bindTooltip(title, opt);
         }
@@ -160,11 +162,6 @@ var AipMap = function () {
     // 更新图层id
     waypointMap['_leaflet_id'] = 'waypointMap';
     layersGroup['waypointMap'] = waypointMap;
-
-
-
-
-
 
     //情报区
     var firMap = L.geoJSON(fir, {
@@ -182,6 +179,8 @@ var AipMap = function () {
                 permanent: true,
                 class: 'fir'
             };
+            // 更新图层id
+            layer['_leaflet_id'] = feature.properties.name;
             layer.bindTooltip(title, opt);
             layer.closeTooltip();
         }
@@ -212,6 +211,14 @@ var AipMap = function () {
     // 更新图层id
     accMap['_leaflet_id'] = 'accMap';
     layersGroup['accMap'] = accMap;
+
+    //设置经纬网显示
+    var gridLayer =  L.latlngGraticule({
+        showLabel: true,
+        color:'#555'
+    });
+    gridLayer['_leaflet_id'] = 'gridLayer';
+    layersGroup['gridLayer'] = gridLayer;
 
     return{
         layersGroup:layersGroup,
