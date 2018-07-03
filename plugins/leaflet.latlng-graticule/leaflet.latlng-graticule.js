@@ -7,7 +7,7 @@
 (function (window, document, undefined) {
 
     L.LatLngGraticule = L.Layer.extend({
-        includes: L.Mixin.Events,
+        includes: L.Evented,
 
         options: {
             showLabel: true,

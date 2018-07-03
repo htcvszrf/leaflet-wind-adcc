@@ -213,13 +213,20 @@ var AipMap = function () {
     layersGroup['accMap'] = accMap;
 
     //设置经纬网显示
-    var gridLayer =  L.latlngGraticule({
-        showLabel: true,
-        color:'#555'
-    });
+    var options = {
+        interval: 20,
+        showOriginLabel: false,
+        redraw: 'move',
+        zoomIntervals: [
+            {start: 2, end: 2, interval: 40},
+            {start: 3, end: 3, interval: 20},
+            {start: 4, end: 4, interval: 10},
+            {start: 5, end: 7, interval: 5},
+            {start: 8, end: 20, interval: 1}
+        ]};
+    var gridLayer =  L.simpleGraticule(options);
     gridLayer['_leaflet_id'] = 'gridLayer';
     layersGroup['gridLayer'] = gridLayer;
-
     return{
         layersGroup:layersGroup,
     }

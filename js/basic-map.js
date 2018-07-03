@@ -1,36 +1,37 @@
 var initMap = (function () {
     var ipHost = "http://192.168.243.41:7070/geoserver/gwc/service/wms";
-    var flightIphost = "http://192.168.243.41:8282/AIRPORT/FlightDynamicData";//航班数据ip
+    var flightIphost = "http://192.168.243.41:8286/AIRPORT/FlightDynamicData";//航班数据ip
     var flightArr = [];//保存航班图层
     var isFlightRefresh = true;//飞行航班数据是否刷新
     var refreshTime = 1000 * 4;//飞行航班数据刷新时间
     var flyTimer;//航班定时器
+    var layersId;
     var mainMap = L.map("main", {
         crs: L.CRS.EPSG4326,
         minZoom:3
     });
     //设置地图中心视角
-    mainMap.setView([37.549072229927816, 111.95217360516556], 6);
+    mainMap.setView([30.578333,103.946944], 13);
     // var airwayMap = L.tileLayer.wms("http://192.168.243.67:3619/geoserver/gwc/service/wms", {layers: 'china-osm:ne_10m_populated_places', format: 'image/png8'}).addTo(mainMap);
     //绑定地图缩放事件
     var bound = {
         northEast:mainMap.getBounds()['_northEast'],
         southWest:mainMap.getBounds()['_southWest'],
-        // zoomNum:mainMap.getZoom()
-    };//当前视图范围以及缩放等级
+        mapZoomNum:mainMap.getZoom()//当前视图范围以及缩放等级
+    };
     //地图缩放事件
     mainMap.on("zoomend",function(){
         // 更新边界数据
         bound = {
             northEast:mainMap.getBounds()['_northEast'],
             southWest:mainMap.getBounds()['_southWest'],
-            // zoomNum:mainMap.getZoom()
+            mapZoomNum:mainMap.getZoom()
         };
         //更新缩放等级
-        zoomNum = mainMap.getZoom();
-        // getUnFlyFlightData(false,bound);
+        mapZoomNum = mainMap.getZoom();
+        // getFlightData(false,bound)
         console.log(bound)
-        console.log(zoomNum)
+        console.log(mapZoomNum)
     })
     //绑定地图拖拽事件
     mainMap.on("moveend",function(){
@@ -38,13 +39,13 @@ var initMap = (function () {
         bound = {
             northEast:mainMap.getBounds()['_northEast'],
             southWest:mainMap.getBounds()['_southWest'],
-            // zoomNum:mainMap.getZoom()
+            mapZoomNum:mainMap.getZoom()
         };
         //更新缩放等级
-        zoomNum = mainMap.getZoom();
-        // getUnFlyFlightData(false,bound);
+        mapZoomNum = mainMap.getZoom();
+        // getFlightData(false,bound)
         console.log(bound)
-        console.log(zoomNum)
+        console.log(mapZoomNum)
     })
     //地图详细街道
     var openmap = L.tileLayer.wms(ipHost, {
@@ -109,7 +110,7 @@ var initMap = (function () {
      * @param zoomIndex
      */
     var layerShowRule = function (layer, zoomIndex) {
-        //排除航路和航路点图层
+        //排除航路和航路点和经纬网图层
         if (layer['_leaflet_id'] != 'airwayMap' && layer['_leaflet_id'] != 'waypointMap' && layer['_leaflet_id'] != 'gridLayer') {
             //管制区情报区显示规则
             if (layer['_leaflet_id'] == 'firMap' || layer['_leaflet_id'] == 'accMap') {
@@ -150,7 +151,7 @@ var initMap = (function () {
     }
     //定义图层
     var baseMapLaysers = {
-        中国: openmap
+        中国: chinaBorder
     };
     /**
      * 设置图层控制
@@ -162,9 +163,9 @@ var initMap = (function () {
         //绑定到图层添加事件控制title显示
         $.each(layers, function (index, aipLayer) {
             aipLayer.on("add", function () {
-                if(aipLayer._leaflet_id == 'gridLayer'){
-                    console.log(aipLayer)
-                }
+                controlMapsFunc(aipLayer)
+            });
+            aipLayer.on("add", function () {
                 controlMapsFunc(aipLayer)
             });
             aipLayer.on("zoomend", function () {
@@ -218,7 +219,9 @@ var initMap = (function () {
             $.ajax({
                 url: flightIphost,
                 type: "post",
-                data: dataReusult,
+                data: {
+                    str:dataReusult
+                },
                 success:function(data){
                     if($.isValidObject(data)&&data.status == 200){
                         if($.isValidObject(data.flight)) {
@@ -228,6 +231,13 @@ var initMap = (function () {
                             }
                             //绘制航班图层
                             flightArr = flightMove.drawFlight(data.flight,mainMap,AipMap.layersGroup.runwayMap).unFlyFlightArr;
+                            for(var i=0;i<flightArr.length;i++){
+                                if(mainMap.layerSelectId){
+                                    if(flightArr[i]._leaflet_id == mainMap.layerSelectId){
+                                        flightArr[i].openPopup();
+                                    }
+                                }
+                            }
                             //开启定时
                             if(isFlightRefresh){
                                 startTimer(getFlightData,isFlightRefresh, bound,refreshTime,flyTimer);
