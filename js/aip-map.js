@@ -113,7 +113,10 @@ var AipMap = function () {
         },
         onEachFeature: function (feature, layer) {
             if (feature.properties.type != '军用机场' && feature.properties.type != '军用备降机场') {
-                var title = feature.properties.name;
+                var title = feature.properties.identifier;
+                if(title == ''){
+                    title = feature.properties.name;
+                }
                 var opt = {
                     permanent: true,
                     className: "apName"
@@ -132,7 +135,7 @@ var AipMap = function () {
     var runwayMap = L.geoJSON(runway, {
         style: function (feature) {
             var obj = {
-                color: "green",
+                color: "#008000",
                 fillColor: "green",
                 weight: 1
             };

@@ -4,20 +4,20 @@
 var flightMove = function () {
     /**
      * 绘制航班
-     * @param flights
-     * @param mainMap
+     * @param flights 航班数据
+     * @param mainMap 地图主图
      */
-    var drawFlight = function (flights, mainMap, rwyLayer) {
+    var drawFlight = function (flights, mainMap) {
         //保留航班图层结果集
         const flyFlightArr = [];
         //遍历航班对象
         var flightLen = flights.length;
         for (var i = 0; i < flightLen; i++) {
-            //航班对象
+            //航班数据对象
             var flightObj = flights[i];
-            //定义图层对象
+            //定义航班图层对象
             var flightCircle;
-            if(flightObj.flightid.split(0,3))
+                //根据高度判断航班状态 高度大于50 起飞 否则处于地面状态
             if (flightObj.height*1 >= 50) {
                 // 初始化飞行航班(图标)
                 var flightIcon = L.icon({
@@ -41,7 +41,11 @@ var flightMove = function () {
                     radius = 100
                 } else {
                     //根据速度设置圆形半径
-                    radius = flightObj.vec * 1 / 20;
+                    if(flightObj.vec*1 < 50){
+                        radius = 100;
+                    }else{
+                        radius = flightObj.vec * 1 / 5;
+                    }
                     //加速
                     if (flightObj.speedStatus == 'accelerate') {
                         flightColor = '#FF0000';
@@ -60,91 +64,137 @@ var flightMove = function () {
                     radius: radius,
                     color: flightColor
                 });
-                //判断航班是否占用跑道
-                if (flightObj.runway) {
-                    //占用跑道名称
-                    var occupiedRwy = flightObj.runway.runwayName;
-                    // 遍历跑道图层对象
-                    if($.isValidObject(rwyLayer)){
-                        var rwyLayer = rwyLayer._layers
-                        for (var j in rwyLayer) {
-                            //跑道图层对象
-                            var rwyLayerObj = rwyLayer[j];
-                            //跑道占用修改跑道颜色
-                            if (occupiedRwy == rwyLayerObj['_leaflet_id']) {
-                                //占用红色
-                                rwyLayerObj.setStyle({
-                                    color: '#ff0000'
-                                })
-                            } else {
-                                //占用绿色
-                                rwyLayerObj.setStyle({
-                                    color: '#00ff00'
-                                })
-                            }
-                            //绘制航班到跑道末端距离
-                            flightCircle.distanceLayer = L.polyline(flightObj.runway.runwayLatLon, {
-                                color: '#00ffff',
-                                weight: 15
-                            }).addTo(mainMap);
-                            //修改图层id
-                            flightCircle.distanceLayer['_leaflet_id'] = flightObj.runway.runwayName + "Distance";
-                            //定义title
-                            const distanceTitle = "Distance: " + flightObj.runway.runwayDistance + "km";
-                            const distanceOpt = {
-                                permanent: true,
-                            };
-                            //绑定title
-                            flightCircle.distanceLayer.bindTooltip(distanceTitle, distanceOpt);
-                        }
-                    }
-                }
             }
             //更新航班id到图层id
             flightCircle['_leaflet_id'] = flightObj.flightid;
             //显示航班信息
             var title = 'Flight: ' + flightObj.flightid + "<br>" + "speed: " + flightObj.vec + "<br>" + "height: " + flightObj.height + "<br>" + "Time:" + flightObj.time + "<br>" + "lon:" + flightObj.lon + "<br>" + "lat:" + flightObj.lat + "<br>" + "direction:" + flightObj.direction*1;
-
+            //绑定提示信息
             flightCircle.bindPopup(title)
+            //打开提示信息
             flightCircle.openPopup();
-
             // var opt = {
             //     permanent: true,
             // };
             // flightCircle.bindTooltip(title, opt);
             // flightCircle.closeTooltip()
+
+            //更新当前选中的航班id
             flightCircle.on("click",function () {
-                mainMap.layerSelectId = this._leaflet_id
+                mainMap.layerSelectId = this._leaflet_id;
+                // this.openTooltip();
             })
+            //添加鼠标交互事件
+            flightCircle.on("mouseover ",function () {
+                this.openPopup();
+            })
+            flightCircle.on("mouseout  ",function () {
+                this.closePopup();
+            })
+            //添加到主图上
             flightCircle.addTo(mainMap)
             flyFlightArr.push(flightCircle);
         }
 
         return {
             unFlyFlightArr: flyFlightArr,
+
         }
     }
     /**
-     * 移除图层
-     * @param flightLayers
-     * @param distanceLayers
+     * 绘制距离跑道末端距离
+     * @param flights
+     * @param runwayLayers
+     * @returns {{rwyDistanceArr: Array}}
      */
-    var removeFlight = function (flightLayers ) {
-        for(var i=0;i<flightLayers.length;i++){
-            //移除航班图层
-            flightLayers[i].remove()
-            //移除跑道末端距离图层
-            if($.isValidObject(flightLayers)){
-                for(var j =0;j<flightLayers.length;j++){
-                 if($.isValidObject(flightLayers[j].distanceLayer)){
-                     flightLayers[j].distanceLayer.remove();
-                 }
+    var drawRunwayStatus = function (flights,mainMap,runwayLayers) {
+        //保留航班图层结果集
+        const rwyDistanceArr = [];
+        //遍历航班对象
+        var flightLen = flights.length;
+        for (var i = 0; i < flightLen; i++) {
+            //航班对象
+            var flightObj = flights[i];
+            //判断航班是否占用跑道
+            if (flightObj.runway) {
+                //占用跑道名称
+                var occupiedRwy = flightObj.runway.runwayName;
+                // 遍历跑道图层对象
+                if($.isValidObject(runwayLayers)&&mainMap.hasLayer(runwayLayers)){
+                    //获取跑道图层对象集合
+                    var rwyLayer = runwayLayers._layers;
+                    //创建跑道末端距离对象
+                    var rwyDistance;
+                    for (var j in rwyLayer) {
+                        //跑道图层对象
+                        var rwyLayerObj = rwyLayer[j];
+
+                        //根据id判断跑道是否被占用
+                        if (occupiedRwy == rwyLayerObj['_leaflet_id']) {
+                            //占用红色
+                            rwyLayerObj.setStyle({
+                                color: '#ff0000'
+                            })
+                        } else {
+                            //占用绿色
+                            rwyLayerObj.setStyle({
+                                color: '#00ff00'
+                            })
+                        }
+                        //当距离跑道末端小于1km时不显示
+                        if(flightObj.runway.runwayDistance*1<1){
+                            //绘制航班到跑道末端距离
+                            rwyDistance = L.polyline(flightObj.runway.runwayLatLon, {
+                                color: '#ff00ff',
+                                weight: 5
+                            });
+                            //修改图层id
+                            rwyDistance['_leaflet_id'] = flightObj.runway.runwayName + flightObj.flightid;
+                            //定义title
+                            const distanceTitle = "Distance: " + flightObj.runway.runwayDistance + "km";
+                            const distanceOpt = {
+                                permanent: true,
+                            };
+                            //绑定title
+                            rwyDistance.bindTooltip(distanceTitle, distanceOpt);
+                            //当距离跑道末端距离小于1Km时显示距离跑道末端距离
+                            rwyDistance.addTo(mainMap);
+                        }
+                        }
+                    //当距离跑道末端小于1km时不显示
+                    if(flightObj.runway.runwayDistance*1<1){
+                        //保存到数组中
+                        rwyDistanceArr.push(rwyDistance);
+                    }
                 }
             }
+        }
+        return{
+            rwyDistanceArr:rwyDistanceArr
+        }
+    }
+
+
+
+    /**
+     * 移除图层
+     * @param flightLayers 航班图层
+     * @param mainMap 地图主图
+     */
+    var removeFlight = function (flightLayers,distanceLayers,mainMap) {
+        //移除航班图层
+        for(var i=0;i<flightLayers.length;i++){
+            mainMap.removeLayer(flightLayers[i]);
+        }
+        //移除跑道末端距离图层
+        for(var i=0;i<distanceLayers.length;i++){
+            //移除航班图层
+            mainMap.removeLayer(mainMap._layers[distanceLayers[i]._leaflet_id]);
         }
     }
     return {
         drawFlight: drawFlight,
         removeFlight: removeFlight,
+        drawRunwayStatus:drawRunwayStatus
     }
 }();

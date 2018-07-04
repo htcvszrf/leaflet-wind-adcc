@@ -2,6 +2,7 @@ var initMap = (function () {
     var ipHost = "http://192.168.243.41:7070/geoserver/gwc/service/wms";
     var flightIphost = "http://192.168.243.41:8286/AIRPORT/FlightDynamicData";//航班数据ip
     var flightArr = [];//保存航班图层
+    var distanceArr = [];//保存跑道末端距离
     var isFlightRefresh = true;//飞行航班数据是否刷新
     var refreshTime = 1000 * 4;//飞行航班数据刷新时间
     var flyTimer;//航班定时器
@@ -165,9 +166,6 @@ var initMap = (function () {
             aipLayer.on("add", function () {
                 controlMapsFunc(aipLayer)
             });
-            aipLayer.on("add", function () {
-                controlMapsFunc(aipLayer)
-            });
             aipLayer.on("zoomend", function () {
                 aipLayer(layersArr)
             })
@@ -183,8 +181,8 @@ var initMap = (function () {
         layerControl.addOverlay(openmap, "街道");
         layerControl.addOverlay(layers.gridLayer, "经纬网格");
         layerControl.addOverlay(layers.secMap, "扇区");
-        var airports = L.featureGroup([layers.runwayMap, layers.airpointMap]);
-        layerControl.addOverlay(airports, "机场");
+        layerControl.addOverlay(layers.runwayMap, "跑道");
+        layerControl.addOverlay(layers.airpointMap, "机场");
         // layerControl.addOverlay(velocityLayer, "风向图");
         layerControl.addOverlay(layers.accMap, "管制区");
         layerControl.addOverlay(layers.appsectorMap, "进近扇区");
@@ -227,17 +225,25 @@ var initMap = (function () {
                         if($.isValidObject(data.flight)) {
                             //移除上次绘制图层
                             if(flightArr.length>0){
-                                flightMove.removeFlight(flightArr);
+                                flightMove.removeFlight(flightArr,distanceArr,mainMap);
+                                flightArr =[];
+                                distanceArr =[];
                             }
                             //绘制航班图层
-                            flightArr = flightMove.drawFlight(data.flight,mainMap,AipMap.layersGroup.runwayMap).unFlyFlightArr;
-                            for(var i=0;i<flightArr.length;i++){
-                                if(mainMap.layerSelectId){
-                                    if(flightArr[i]._leaflet_id == mainMap.layerSelectId){
-                                        flightArr[i].openPopup();
-                                    }
-                                }
-                            }
+                            flightArr = flightMove.drawFlight(data.flight,mainMap).unFlyFlightArr;
+                            //绘制跑道到末端距离
+                            distanceArr = flightMove.drawRunwayStatus(data.flight,mainMap,AipMap.layersGroup.runwayMap).rwyDistanceArr;
+                            //显示已经打开的提示信息
+                            // for(var i=0;i<flightArr.length;i++){
+                            //     if(mainMap.layerSelectId){
+                            //         if(flightArr[i]._leaflet_id == mainMap.layerSelectId){
+                            //             var isOpen =  flightArr[i].isPopupOpen()
+                            //             if(isOpen){
+                            //                 flightArr[i].openPopup();
+                            //             }
+                            //         }
+                            //     }
+                            // }
                             //开启定时
                             if(isFlightRefresh){
                                 startTimer(getFlightData,isFlightRefresh, bound,refreshTime,flyTimer);
