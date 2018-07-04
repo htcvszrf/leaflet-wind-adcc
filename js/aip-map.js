@@ -150,6 +150,7 @@ var AipMap = function () {
             };
             // 更新图层id
             layer._leaflet_id = feature.properties.enName + '_' + feature.properties.runwayName;
+            layer['multFlight'] = false;
             //绑定title
             layer.bindTooltip(title, opt);
         }

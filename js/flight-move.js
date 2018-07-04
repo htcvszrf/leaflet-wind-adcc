@@ -131,18 +131,30 @@ var flightMove = function () {
 
                         //根据id判断跑道是否被占用
                         if (occupiedRwy == rwyLayerObj['_leaflet_id']) {
-                            //占用红色
-                            rwyLayerObj.setStyle({
-                                color: '#ff0000'
-                            })
+                            if(rwyLayerObj.multFlight){
+                                //多条航班占用黑色
+                                rwyLayerObj.setStyle({
+                                    color: '#000000',
+                                    fillColor:"#000000"
+                                })
+                            }else{
+                                //单条航班占用红色
+                                rwyLayerObj.multFlight = true;
+                                rwyLayerObj.setStyle({
+                                    color: '#ff0000',
+                                    fillColor:"#ff0000"
+                                })
+                            }
                         } else {
-                            //占用绿色
+                            //没有用绿色
                             rwyLayerObj.setStyle({
-                                color: '#00ff00'
+                                color: '#008000',
+                                fillColor:"#008000"
                             })
+                            rwyLayerObj.multFlight = false;
                         }
-                        //当距离跑道末端小于1km时不显示
-                        if(flightObj.runway.runwayDistance*1<1){
+                        //当距离跑道末端小于1.5km时不显示
+                        if(flightObj.runway.runwayDistance*1<1.5){
                             //绘制航班到跑道末端距离
                             rwyDistance = L.polyline(flightObj.runway.runwayLatLon, {
                                 color: '#ff00ff',
@@ -157,12 +169,11 @@ var flightMove = function () {
                             };
                             //绑定title
                             rwyDistance.bindTooltip(distanceTitle, distanceOpt);
-                            //当距离跑道末端距离小于1Km时显示距离跑道末端距离
                             rwyDistance.addTo(mainMap);
                         }
                         }
                     //当距离跑道末端小于1km时不显示
-                    if(flightObj.runway.runwayDistance*1<1){
+                    if(flightObj.runway.runwayDistance*1<1.5){
                         //保存到数组中
                         rwyDistanceArr.push(rwyDistance);
                     }
@@ -173,9 +184,6 @@ var flightMove = function () {
             rwyDistanceArr:rwyDistanceArr
         }
     }
-
-
-
     /**
      * 移除图层
      * @param flightLayers 航班图层
@@ -192,9 +200,24 @@ var flightMove = function () {
             mainMap.removeLayer(mainMap._layers[distanceLayers[i]._leaflet_id]);
         }
     }
+    /**
+     * 重置跑道样式配置
+     * @param rwyLayer
+     */
+    var removeRunwayStyle = function (rwyLayer) {
+        var rwyLayers = rwyLayer._layers;
+        for (var j in rwyLayers) {
+            rwyLayers[j].setStyle({
+                color: '#008000',
+                fillColor:"#008000"
+            })
+            rwyLayers[j].multFlight = false;
+        }
+    }
     return {
         drawFlight: drawFlight,
         removeFlight: removeFlight,
-        drawRunwayStatus:drawRunwayStatus
+        drawRunwayStatus:drawRunwayStatus,
+        removeRunwayStyle:removeRunwayStyle
     }
 }();

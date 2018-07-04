@@ -226,6 +226,7 @@ var initMap = (function () {
                             //移除上次绘制图层
                             if(flightArr.length>0){
                                 flightMove.removeFlight(flightArr,distanceArr,mainMap);
+                                flightMove.removeRunwayStyle(AipMap.layersGroup.runwayMap)
                                 flightArr =[];
                                 distanceArr =[];
                             }
