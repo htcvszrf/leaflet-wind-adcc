@@ -25,7 +25,7 @@ var flightMove = function () {
                     iconSize: [18, 18]
                 });
                 //初始化飞行航班
-                flightCircle = L.marker([flightObj.lat, flightObj.lon], {
+                flightCircle = L.marker([flightObj.lat*1, flightObj.lon*1], {
                     icon: flightIcon,
                     rotationAngle: flightObj.direction*1,//旋转角度
                     rotationOrigin: 'center center'//旋转中心轴
@@ -73,16 +73,10 @@ var flightMove = function () {
             flightCircle.bindPopup(title)
             //打开提示信息
             flightCircle.openPopup();
-            // var opt = {
-            //     permanent: true,
-            // };
-            // flightCircle.bindTooltip(title, opt);
-            // flightCircle.closeTooltip()
-
             //更新当前选中的航班id
             flightCircle.on("click",function () {
                 mainMap.layerSelectId = this._leaflet_id;
-                // this.openTooltip();
+                showFightDetail(flightObj)
             })
             //添加鼠标交互事件
             flightCircle.on("mouseover ",function () {
@@ -213,6 +207,26 @@ var flightMove = function () {
             })
             rwyLayers[j].multFlight = false;
         }
+    }
+    /**
+     * 展示航班详情信息
+     * @param flight
+     */
+    var showFightDetail = function (flight) {
+        if($(".board").css('right')<0){
+            $("#main").animate({
+                width:'80%'
+            },'slow');
+            $(".board").animate({
+                right:'0%'
+            },'slow')
+        }
+        $('.flightId').html(flight.flightid);
+        $('.depap').html(flight.depap);
+        $('.arrap').html(flight.arrap);
+        $('.time').html(flight.time);
+        $('.vec').html(flight.vec);
+        $('.direction').html(flight.direction);
     }
     return {
         drawFlight: drawFlight,

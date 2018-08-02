@@ -3,65 +3,137 @@
 
 <head>
     <meta charset="utf-8">
-    <title>离线地图</title>
+    <title>地图</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="stylesheet" href="plugins/leaflet/leaflet.css">
-    <link rel="stylesheet" href="plugins/leaflet-wind/leaflet-velocity.css">
     <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" href="plugins/jquery-range/jquery.range.css">
+    <link rel="stylesheet" href="plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="plugins/leaflet/leaflet.css">
+    <link rel="stylesheet" href="plugins/leaflet-wind/leaflet-velocity.css">
     <link rel="stylesheet" href="plugins/leaflet.latlng-graticule/L.SimpleGraticule.css">
     <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
+<div class="container">
     <div id="main">
+        <span class="switch-panel glyphicon glyphicon-arrow-left"></span>
     </div>
-    <!--jquery-->
-    <script src="plugins/jquery/jquery.min.js"></script>
-    <script src="plugins/jquery/jquery-custom-util.js"></script>
-    <!--jquery-range-->
-    <script src="plugins/jquery-range/jquery.range.js"></script>
-    <!--bootstrap-->
-    <script src="plugins/bootstrap/js/bootstrap.js"></script>
-    <!--leaflet-->
-    <script src="plugins/leaflet/leaflet-src.js"></script>
-    <script src="plugins/leaflet-rotatedMarker/leaflet.rotatedMarker.js"></script>
-    <script src="plugins/leaflet-wind/leaflet-velocity.js"></script>
-    <!--经纬网-->
-    <!--<script src="plugins/leaflet.latlng-graticule/leaflet.latlng-graticule.js"></script>-->
-    <script src="plugins/leaflet.latlng-graticule/L.SimpleGraticule.js"></script>
-    <!--heatmap-->
-    <script src="plugins/heat-map/heatmap.js"></script>
-    <script src="plugins/heat-map/leaflet-heatmap.js"></script>
-    <!--中国边境数据-->
-    <script src="data/china.js"></script>
-    <script src="data/border3D.js"></script>
-    <script src="data/border4D.js"></script>
-    <!--扇区-->
-    <script src="data/sector.js"></script>
-    <!--跑道-->
-    <script src="data/runway.js"></script>
-    <!--管制区-->
-    <script src="data/acc.js"></script>
-    <!--进近扇区-->
-    <script src="data/appsector.js"></script>
-    <!--进近终端区-->
-    <script src="data/appter.js"></script>
-    <!--机场点-->
-    <script src="data/airport-point.js"></script>
-    <!--机场动画-->
-    <script src="data/flights-animation.js"></script>
-    <!--情报区-->
-    <script src="data/fir.js"></script>
-    <!--风向数据-->
-    <script src="data/wind.js"></script>
-    <!--航班动画-->
-    <script src="js/flight-move.js"></script>
-    <!--主函数-->
-    <script src="js/basic-map.js"></script>
-    <!--情报数据绘制-->
-    <script src="js/aip-map.js"></script>
+    <div class="panel board">
+            <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation"class="active"><a href="#track-replay" aria-controls="track-replay" role="tab" data-toggle="tab">航迹回放</a></li>
+                <li role="presentation"><a href="#air-plane" aria-controls="air-plane" role="tab" data-toggle="tab">动态航班</a></li>
+                <li role="presentation"><a href="#flight-detail" aria-controls="flight-detail" role="tab" data-toggle="tab">航班信息</a></li>
+            </ul>
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active" id="track-replay">
+                    <div class="panel">
+                        <div class="form-inline">
+                            <label class="control-label">起止时间 : </label>
+                            <div class="input-daterange input-group" id="datepicker">
+                                <input type="text" class="form-control start-date-input" name="start"  />
+                                <span class="input-group-addon">至</span>
+                                <input type="text" class="form-control end-date-input" name="end" id="qEndTime"  />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="form-inline clearfix">
+                            <button type="button" class="btn btn-primary pull-right">播放</button>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="air-plane">
+                    <div class="panel">
+                        <div class="form-inline clearfix">
+                            <button type="button" class="btn btn-primary pull-right play-flight" isPlay = false>显示航班动态航班信息</button>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="flight-detail">
+                    <div class=" col-lg-12 clearfix detail-panel">
+                        <div class="pull-left">航班号：</div>
+                        <div class="pull-left flightId"></div>
+                    </div>
+                    <div class=" col-lg-12 clearfix detail-panel">
+                        <div class="pull-left">DEPAP：</div>
+                        <div class="pull-left depap"></div>
+                    </div>
+                    <div class=" col-lg-12 clearfix detail-panel">
+                        <div class="pull-left">ARRAP：</div>
+                        <div class="pull-left arrap"></div>
+                    </div>
+                    <div class=" col-lg-12 clearfix detail-panel">
+                        <div class="pull-left">TIME：</div>
+                        <div class="pull-left time"></div>
+                    </div>
+                    <div class=" col-lg-12 clearfix detail-panel">
+                        <div class="pull-left">VEC：</div>
+                        <div class="pull-left vec"></div>
+                    </div>
+                    <div class=" col-lg-12 clearfix detail-panel">
+                        <div class="pull-left">DIRECTION：</div>
+                        <div class="pull-left direction"></div>
+                    </div>
+                </div>
+            </div>
+
+    </div>
+</div>
+<!--jquery-->
+<script src="plugins/jquery/jquery.min.js"></script>
+<script src="plugins/jquery/jquery-custom-util.js"></script>
+<!--jquery-range-->
+<script src="plugins/jquery-range/jquery.range.js"></script>
+<!--bootstrap-->
+<script src="plugins/bootstrap/js/bootstrap.js"></script>
+<!--bootstrap-datetimepicker-->
+<script src="plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js" type="text/javascript"></script>
+<script src="plugins/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js" type="text/javascript"></script>
+<!--leaflet-->
+<script src="plugins/leaflet/leaflet-src.js"></script>
+<script src="plugins/leaflet-rotatedMarker/leaflet.rotatedMarker.js"></script>
+<script src="plugins/leaflet-wind/leaflet-velocity.js"></script>
+<!--经纬网-->
+<script src="plugins/leaflet.latlng-graticule/L.SimpleGraticule.js"></script>
+<!--流量显示-->
+<script src="plugins/leaflet-ant-path/leaflet-ant-path.js"></script>
+<!--雷达回波heatmap-->
+<script src="plugins/heat-map/heatmap.js"></script>
+<script src="plugins/heat-map/leaflet-heatmap.js"></script>
+<!--航班流量热力-->
+<script src="plugins/heat-map/leaflet-heat.js"></script>
+
+<!--中国边境数据-->
+<script src="data/china.js"></script>
+<script src="data/border3D.js"></script>
+<script src="data/border4D.js"></script>
+<!--扇区-->
+<script src="data/sector.js"></script>
+<!--跑道-->
+<script src="data/runway.js"></script>
+<!--管制区-->
+<script src="data/acc.js"></script>
+<!--进近扇区-->
+<script src="data/appsector.js"></script>
+<!--进近终端区-->
+<script src="data/appter.js"></script>
+<!--机场点-->
+<script src="data/airport-point.js"></script>
+<!--机场动画-->
+<script src="data/flights-animation.js"></script>
+<!--情报区-->
+<script src="data/fir.js"></script>
+<!--航路-->
+<script src="data/airway.js"></script>
+<!--风向数据-->
+<script src="data/wind.js"></script>
+<!--航班动画-->
+<script src="js/flight-move.js"></script>
+<!--情报数据绘制-->
+<script src="js/aip-map.js"></script>
+<!--主函数-->
+<script src="js/basic-map.js"></script>
 </body>
 
 </html>

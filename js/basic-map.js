@@ -1,59 +1,100 @@
 var initMap = (function () {
     var ipHost = "http://192.168.243.41:7070/geoserver/gwc/service/wms";
-    var flightIphost = "http://192.168.243.41:8286/AIRPORT/FlightDynamicData";//航班数据ip
-    var flightArr = [];//保存航班图层
-    var distanceArr = [];//保存跑道末端距离
-    var isFlightRefresh = true;//飞行航班数据是否刷新
-    var refreshTime = 1000 * 4;//飞行航班数据刷新时间
-    var flyTimer;//航班定时器
+    var flightIphost = "http://192.168.243.41:8286/AIRPORT/FlightDynamicData"; //航班数据ip
+    var flightArr = []; //保存航班图层
+    var distanceArr = []; //保存跑道末端距离
+    var isFlightRefresh = false; //飞行航班数据是否刷新
+    var refreshTime = 1000 * 4; //飞行航班数据刷新时间
+    var flyTimer; //航班定时器
     var layersId;
     var mainMap = L.map("main", {
-        crs: L.CRS.EPSG4326,
-        minZoom:3
+        // crs: L.CRS.EPSG900913,
+        minZoom: 3,
+        maxBounds: [
+            [82.69865866056999, 272.28515625000006],
+            [-8.754794702435618, -65.21484375000001]
+        ]
     });
     //设置地图中心视角
-    mainMap.setView([30.578333,103.946944], 13);
-    // var airwayMap = L.tileLayer.wms("http://192.168.243.67:3619/geoserver/gwc/service/wms", {layers: 'china-osm:ne_10m_populated_places', format: 'image/png8'}).addTo(mainMap);
+    mainMap.setView([30.578333, 103.946944], 4);
     //绑定地图缩放事件
     var bound = {
-        northEast:mainMap.getBounds()['_northEast'],
-        southWest:mainMap.getBounds()['_southWest'],
-        mapZoomNum:mainMap.getZoom()//当前视图范围以及缩放等级
+        northEast: mainMap.getBounds()['_northEast'],
+        southWest: mainMap.getBounds()['_southWest'],
+        mapZoomNum: mainMap.getZoom() //当前视图范围以及缩放等级
     };
     //地图缩放事件
-    mainMap.on("zoomend",function(){
+    mainMap.on("zoomend", function () {
         // 更新边界数据
         bound = {
-            northEast:mainMap.getBounds()['_northEast'],
-            southWest:mainMap.getBounds()['_southWest'],
-            mapZoomNum:mainMap.getZoom()
+            northEast: mainMap.getBounds()['_northEast'],
+            southWest: mainMap.getBounds()['_southWest'],
+            mapZoomNum: mainMap.getZoom()
         };
         //更新缩放等级
         mapZoomNum = mainMap.getZoom();
         // getFlightData(false,bound)
         console.log(bound)
         console.log(mapZoomNum)
+        if(mapZoomNum>=7){
+            heatmapLayer.cfg.radius = 0.01;
+        }else if(mapZoomNum<=3){
+            heatmapLayer.cfg.radius = 0.08;
+        }else{
+            heatmapLayer.cfg.radius = 0.04;
+        }
     })
     //绑定地图拖拽事件
-    mainMap.on("moveend",function(){
+    mainMap.on("moveend", function () {
         //更新边界数据
         bound = {
-            northEast:mainMap.getBounds()['_northEast'],
-            southWest:mainMap.getBounds()['_southWest'],
-            mapZoomNum:mainMap.getZoom()
+            northEast: mainMap.getBounds()['_northEast'],
+            southWest: mainMap.getBounds()['_southWest'],
+            mapZoomNum: mainMap.getZoom()
         };
         //更新缩放等级
         mapZoomNum = mainMap.getZoom();
         // getFlightData(false,bound)
         console.log(bound)
-        console.log(mapZoomNum)
+        console.log(mapZoomNum);
     })
-    //地图详细街道
+    //地图详细街道(加载wms瓦片)
     var openmap = L.tileLayer.wms(ipHost, {
         layers: 'chinaosm:osm',
         format: 'image/png8',
-
     });
+    //雷达回波图图初始化
+    var config = {
+        radius: 0.05,       //设置每一个热力点的半径
+        maxOpacity: 0.9,        //设置最大的不透明度
+        minOpacity: 0.3,     //设置最小的不透明度
+        scaleRadius: true,      //设置热力点是否平滑过渡
+        // blur: 0.95,             //系数越高，渐变越平滑，默认是0.85,
+        useLocalExtrema: true,  //使用局部极值
+        latField: 'lat',//纬度
+        valueField: 'grade',//热力点值
+        lngField: 'lon',//经度
+        gradient: {
+            "1.0": 'rgb(173,144,240)',
+            "0.80": 'rgb(173,144,240)',
+            "0.70": 'rgb(173,144,240)',
+            "0.65": 'rgb(150,0,180)',
+            "0.60": 'rgb(255,0,240)',
+            "0.55": 'rgb(192,0,0)',
+            "0.50": 'rgb(214,0,0)',
+            "0.45": 'rgb(255,0,0)',
+            "0.40": 'rgb(255,144,0)',
+            "0.35": 'rgb(231,192,0)',
+            "0.30": 'rgb(255,255,0)',
+            "0.25": 'rgb(1,144,0)',
+            "0.20": 'rgb(0,216,0)',
+            "0.15": 'rgb(0, 236, 236)',
+            "0.10": 'rgb(1, 160, 246)',
+            "0.0": 'rgba(255, 255, 255,0)'
+        }//热力图颜色值
+    }
+    //初始化雷达回拨图层
+    var heatmapLayer = new HeatmapOverlay(config);
     //中国轮廓图
     var chinaBorder = L.geoJSON(china, {
         style: function (feature) {
@@ -106,7 +147,7 @@ var initMap = (function () {
         }
     };
     /**
-     * 图层title显示规则
+     * 部分图层title显示规则
      * @param layer
      * @param zoomIndex
      */
@@ -152,8 +193,11 @@ var initMap = (function () {
     }
     //定义图层
     var baseMapLaysers = {
-        中国: chinaBorder
+        中国: chinaBorder,
     };
+    var blockMap = {
+        街道: openmap,
+    }
     /**
      * 设置图层控制
      */
@@ -163,9 +207,11 @@ var initMap = (function () {
         var layersArr = [];
         //绑定到图层添加事件控制title显示
         $.each(layers, function (index, aipLayer) {
+            //显示事件
             aipLayer.on("add", function () {
                 controlMapsFunc(aipLayer)
             });
+            //缩放事件
             aipLayer.on("zoomend", function () {
                 aipLayer(layersArr)
             })
@@ -183,11 +229,11 @@ var initMap = (function () {
         layerControl.addOverlay(layers.secMap, "扇区");
         layerControl.addOverlay(layers.runwayMap, "跑道");
         layerControl.addOverlay(layers.airpointMap, "机场");
-        // layerControl.addOverlay(velocityLayer, "风向图");
+        layerControl.addOverlay(velocityLayer, "风向图");
+        layerControl.addOverlay(heatmapLayer, "云图");
         layerControl.addOverlay(layers.accMap, "管制区");
         layerControl.addOverlay(layers.appsectorMap, "进近扇区");
         layerControl.addOverlay(layers.appterMap, "进近终端区");
-        // layerControl.addOverlay(heatLayer, "热力图");
         layerControl.addOverlay(layers.airwayMap, '航路');
         layerControl.addOverlay(layers.firMap, '情报区');
         layerControl.addOverlay(layers.waypointMap, "航路点");
@@ -199,12 +245,12 @@ var initMap = (function () {
      * @param isNext
      * @param time
      */
-    var startTimer = function (func,isNext,lonData, time,timer) {
+    var startTimer = function (func, isNext, lonData, time, timer) {
         // 清除定时器
         clearTimeout(timer);
         if (typeof func == "function") {
             timer = setTimeout(function () {
-                func(isNext,lonData);
+                func(isNext, lonData);
             }, time);
         }
     };
@@ -212,375 +258,207 @@ var initMap = (function () {
      * 获取飞行航班数据
      * @param isFlightRefresh
      */
-    var getFlightData = function(isFlightRefresh,lonData){
+    var flightHeat
+    var getFlightData = function (isFlightRefresh, lonData) {
+        //json化参数
         var dataReusult = JSON.stringify(lonData);
-            $.ajax({
-                url: flightIphost,
-                type: "post",
-                data: {
-                    str:dataReusult
-                },
-                success:function(data){
-                    if($.isValidObject(data)&&data.status == 200){
-                        if($.isValidObject(data.flight)) {
-                            //移除上次绘制图层
-                            if(flightArr.length>0){
-                                flightMove.removeFlight(flightArr,distanceArr,mainMap);
-                                flightMove.removeRunwayStyle(AipMap.layersGroup.runwayMap)
-                                flightArr =[];
-                                distanceArr =[];
-                            }
-                            //绘制航班图层
-                            flightArr = flightMove.drawFlight(data.flight,mainMap).unFlyFlightArr;
-                            //绘制跑道到末端距离
-                            distanceArr = flightMove.drawRunwayStatus(data.flight,mainMap,AipMap.layersGroup.runwayMap).rwyDistanceArr;
-                            //显示已经打开的提示信息
-                            // for(var i=0;i<flightArr.length;i++){
-                            //     if(mainMap.layerSelectId){
-                            //         if(flightArr[i]._leaflet_id == mainMap.layerSelectId){
-                            //             var isOpen =  flightArr[i].isPopupOpen()
-                            //             if(isOpen){
-                            //                 flightArr[i].openPopup();
-                            //             }
-                            //         }
-                            //     }
-                            // }
-                            //开启定时
-                            if(isFlightRefresh){
-                                startTimer(getFlightData,isFlightRefresh, bound,refreshTime,flyTimer);
-                            }
+        $.ajax({
+            url: flightIphost,
+            type: "post",
+            data: {
+                str: dataReusult
+            },
+            success: function (data) {
+                if ($.isValidObject(data) && data.status == 200) {
+                    if ($.isValidObject(data.flight)) {
+                        // 移除上次绘制图层
+                        if (flightArr.length > 0) {
+                            // 移除上次绘制航班图层
+                            flightMove.removeFlight(flightArr, distanceArr, mainMap);
+                            // 移除上次绘制跑道样式图层
+                            flightMove.removeRunwayStyle(AipMap.layersGroup.runwayMap)
+                            //数据置空
+                            flightArr = [];
+                            distanceArr = [];
                         }
-                    }else if(data.status == 500){
-                        startTimer(getFlightData,isFlightRefresh, bound,refreshTime,flyTimer);
-                        console.warn(data.error.message)
+                        // 绘制航班图层
+                        flightArr = flightMove.drawFlight(data.flight, mainMap).unFlyFlightArr;
+                        // 绘制跑道到末端距离
+                        distanceArr = flightMove.drawRunwayStatus(data.flight, mainMap, AipMap.layersGroup.runwayMap).rwyDistanceArr;
+                        //绘制航班热力图显示
+                        // flightHeatMap(data);
+                        //开启定时
+                        if (isFlightRefresh) {
+                            startTimer(getFlightData, isFlightRefresh, bound, refreshTime, flyTimer);
+                        }
                     }
-                },
-                error: function (xhr, status, error) {
-                    clearInterval(flyTimer);
-                    startTimer(getFlightData,isFlightRefresh, bound,refreshTime,flyTimer);
-                    console.warn(error)
+                } else if (data.status == 500) {
+                    startTimer(getFlightData, isFlightRefresh, bound, refreshTime, flyTimer);
+                    console.warn(data.error.message)
                 }
-            })
+            },
+            error: function (xhr, status, error) {
+                clearInterval(flyTimer);
+                startTimer(getFlightData, isFlightRefresh, bound, refreshTime, flyTimer);
+                console.warn(error)
+            }
+        })
     }
-    //气象数据显示暂时屏蔽
-    // //风向图层
-    // var velocityLayer = L.velocityLayer({
-    //   displayValues: true,
-    //   displayOptions: {
-    //     velocityType: "风向图",
-    //     displayPosition: "bottom left",
-    //     displayEmptyString: "No wind data"
-    //   },
-    //   data: wind,
-    //   maxVelocity: 10
-    // }).on("add", function() {});
-    //
-    // //热力图层
-    // var cfg = {
-    //   radius: 1.5, //设置每一个热力点的半径
-    //   maxOpacity: 0.9, //设置最大的不透明度
-    //   // minOpacity: 0.3,     //设置最小的不透明度
-    //   scaleRadius: true, //设置热力点是否平滑过渡
-    //   blur: 0.95, //系数越高，渐变越平滑，默认是0.85,
-    //   //滤镜系数将应用于所有热点数据。
-    //   useLocalExtrema: true, //使用局部极值
-    //   latField: "lat", //维度
-    //   lngField: "lng", //经度
-    //   valueField: "value", //热力点的值
-    //   gradient: {
-    //     "0.99": "rgba(255,0,0,.5)",
-    //     "0.9": "rgba(255,255,0,1)",
-    //     "0.8": "rgba(0,255,0,1)",
-    //     "0.5": "rgba(0,255,255,1)",
-    //     "0": "rgba(0,0,255,1)"
-    //   }, //过渡，颜色过渡和过渡比例
-    //   backgroundColor: "rgba(27,34,44,0.5)" //热力图Canvas背景
-    // };
-    // var testData = {
-    //   max: 10,
-    //   data: [
-    //     { lat: 40.07222222222222, lng: 116.59722222222221, value: 10 },
-    //     { lat: 39.07222222222222, lng: 117.00722222222221, value: 10 }
-    //   ]
-    // };
-    // //热力图层
-    // var heatLayer = new HeatmapOverlay(cfg).on("add", function() {
-    //   $(".video").show();
-    // }).on("remove", function() {
-    //   $(".video").hide();
-    // });
-    // heatLayer.setData(testData);
-    // //初始化时间选择器
-    // var currentDate = new Date();
-    // var startDate = parseInt($.getFullTime(currentDate).substring(0, 8) + "0000");
-    // var endDate = parseInt($.getFullTime(currentDate).substring(0, 8) + "2359");
-    // $(".range-slider").jRange({
-    //   from: startDate,
-    //   to: endDate,
-    //   step: 100,
-    //   scale: [
-    //     "00:00",
-    //     "01:00",
-    //     "02:00",
-    //     "03:00",
-    //     "04:00",
-    //     "05:00",
-    //     "06:00",
-    //     "07:00",
-    //     "08:00",
-    //     "09:00",
-    //     "10:00",
-    //     "11:00",
-    //     "12:00",
-    //     "13:00",
-    //     "14:00",
-    //     "15:00",
-    //     "16:00",
-    //     "17:00",
-    //     "18:00",
-    //     "19:00",
-    //     "20:00",
-    //     "21:00",
-    //     "22:00",
-    //     "23:00"
-    //   ],
-    //   format: function(value, pointer) {
-    //     return $.formatTimeDDHHMM(value + "");
-    //   },
-    //   onbarclicked:function () {
-    //     var value = $(".range-slider").jRange("getValue")
-    //     if(value != NaN){
-    //       heatLayer.setData(heatMapData[value]);
-    //     }
-    //   },
-    //   ondragend:function () {
-    //     var value = $(".range-slider").jRange("getValue")
-    //     if(value != NaN){
-    //       heatLayer.setData(heatMapData[value]);
-    //     }
-    //   },
-    //   width: 800,
-    //   showLabels: true,
-    //   snap: true
-    // });
-    // $(".play-heat").on("click", function() {
-    //   initHeatAnimation();
-    // });
-    // var heatMapData = {
-    //   201805230000: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 ,radius:0.1},
-    //       { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 ,radius:100}
-    //     ]
-    //   },
-    //   201805230100: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 41.07222222222222, lng: 117.59722222222221, value: 100 ,radius:0.2},
-    //       { lat: 38.07222222222222, lng: 115.00722222222221, value: 100 ,radius:0.02}
-    //     ]
-    //   },
-    //   201805230200: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 42.07222222222222, lng: 118.59722222222221, value: 100 },
-    //       { lat: 36.07222222222222, lng: 113.00722222222221, value: 100 }
-    //     ]
-    //   },
-    //   201805230300: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 45.07222222222222, lng: 120.59722222222221, value: 100 },
-    //       { lat: 30.07222222222222, lng: 110.00722222222221, value: 100 }
-    //     ]
-    //   },
-    //   201805230400: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 42.07222222222222, lng: 120.59722222222221, value: 100 },
-    //       { lat: 35.07222222222222, lng: 105.00722222222221, value: 100 }
-    //     ]
-    //   },
-    //   201805230500: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 30.691667, lng: 106.101667, value: 100 },
-    //       { lat: 37.034444, lng: 79.869167, value: 100 }
-    //     ]
-    //   },
-    //   201805230600: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 31.156944, lng: 107.44, value: 100 },
-    //       { lat: 36.638333, lng: 109.605, value: 100 }
-    //     ]
-    //   },
-    //   201805230700: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 28.428611, lng: 115.921944, value: 100 },
-    //       { lat: 27.8616672, lng: 109.293333, value: 100 }
-    //     ]
-    //   },
-    //   201805230800: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 41.266667, lng: 80.228333, value: 100 },
-    //       { lat: 31.589444, lng: 120.319444, value: 100 }
-    //     ]
-    //   },
-    //   201805230900: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
-    //       { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
-    //     ]
-    //   },
-    //   201805231000: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 43.908889, lng: 87.473056, value: 100 },
-    //       { lat: 21.861667, lng: 100.935556, value: 100 }
-    //     ]
-    //   },
-    //   201805231100: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 36.401667, lng: 94.881667, value: 100 },
-    //       { lat: 30.255, lng: 121.220278, value: 100 }
-    //     ]
-    //   },
-    //   201805231200: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
-    //       { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
-    //     ]
-    //   },
-    //   201805231300: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 35.758333, lng: 107.645, value: 100 },
-    //       { lat: 24.409722, lng: 98.538056, value: 100 }
-    //     ]
-    //   },
-    //   201805231400: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 38.149444, lng: 85.534444, value: 100 },
-    //       { lat: 28.799444, lng: 104.555556, value: 100 }
-    //     ]
-    //   },
-    //   201805231500: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 30.523056, lng: 97.14, value: 100 },
-    //       { lat: 40.148333, lng: 94.708333, value: 100 }
-    //     ]
-    //   },
-    //   201805231600: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 34.276944, lng: 117.999167, value: 100 },
-    //       { lat: 25.644167, lng: 100.324722, value: 100 }
-    //     ]
-    //   },
-    //   201805231700: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 32.672222, lng: 118.579167, value: 100 },
-    //       { lat: 34.555, lng: 108.63, value: 100 }
-    //     ]
-    //   },
-    //   201805231800: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 40.07222222222222, lng: 116.59722222222221, value: 100 },
-    //       { lat: 39.07222222222222, lng: 117.00722222222221, value: 100 }
-    //     ]
-    //   },
-    //   201805231900: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 34.600278, lng: 108.916389, value: 100 },
-    //       { lat: 34.431667, lng: 108.728333, value: 100 }
-    //     ]
-    //   },
-    //   201805232000: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 36.528056, lng: 102.031389, value: 100 },
-    //       { lat: 30.886667, lng: 120.416667, value: 100 }
-    //     ]
-    //   },
-    //   201805232100: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 28.852778, lng: 105.385556, value: 100 },
-    //       { lat: 46.66, lng: 83.37, value: 100 }
-    //     ]
-    //   },
-    //   201805232200: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 29.631667, lng: 105.756667, value: 100 },
-    //       { lat: 29.765, lng: 119.658333, value: 100 }
-    //     ]
-    //   },
-    //   201805232300: {
-    //     max: 10,
-    //     data: [
-    //       { lat: 22.646667, lng: 113.801667, value: 100 },
-    //       { lat: 29.764444, lng: 119.658333, value: 100 }
-    //     ]
-    //   }
-    // };
-    // //初始化热力图动画
-    // var initHeatAnimation = function() {
-    //   var isPlay = eval($(".play-heat").attr("isPlay"));
-    //   var timer;
-    //   if (!isPlay) {
-    //     //播放
-    //     $(".play-heat").removeClass("glyphicon-play");
-    //     $(".play-heat").addClass("glyphicon-pause");
-    //     $(".play-heat").attr("isPlay", true);
-    //     playAnimation(true);
-    //   } else {
-    //     //暂停
-    //     $(".play-heat").removeClass("glyphicon-pause");
-    //     $(".play-heat").addClass("glyphicon-play");
-    //     $(".play-heat").attr("isPlay", false);
-    //     playAnimation(false);
-    //   }
-    // };
-    // //热力图动画播放
-    // var playAnimation = function(isPlay) {
-    //   var currentValue = $(".range-slider").jRange("getValue");
-    //   var setValue = currentValue * 1 + 100 + "";
-    //   var startDate = ($.getFullTime(currentDate).substring(0, 8) + "0000");
-    //   var endDate = ($.getFullTime(currentDate).substring(0, 8) + "2400");
-    //   if (isPlay) {
-    //     if (setValue == endDate) {
-    //       $(".range-slider").jRange("setValue", startDate);
-    //       heatLayer.setData(heatMapData[startDate]);
-    //     } else {
-    //       $(".range-slider").jRange("setValue", setValue);
-    //       heatLayer.setData(heatMapData[setValue]);
-    //     }
-    //     timer = setTimeout(function() {
-    //       playAnimation(isPlay);
-    //     }, 1000);
-    //   } else {
-    //     clearTimeout(timer);
-    //   }
-    // };
+
+    /**
+     * 初始化时间选择器
+     */
+    var initDatePicke = function () {
+        // 起始时间输入框
+        $(' .start-date-input').datetimepicker({
+            language: "zh-CN",
+            weekStart: 1,
+            todayBtn: false,
+            autoclose: 1,
+            startView: 2,
+            minView: 2,
+            forceParse: 0,
+            format: "yyyy-mm-dd", // 选择时间
+            pickerPosition: 'bottom-left'
+        });
+        // 截止时间输入框
+        $(' .end-date-input').datetimepicker({
+            language: "zh-CN",
+            weekStart: 1,
+            todayBtn: false,
+            autoclose: 1,
+            startView: 2,
+            minView: 2,
+            forceParse: 0,
+            format: "yyyy-mm-dd", // 选择时间
+            pickerPosition: 'bottom-left'
+        });
+    }
+
+    /**
+     * 初始化动态航班播放
+     */
+    var intitPlay = function () {
+        $('.play-flight').on('click', function () {
+            if ($(this).attr('isPlay') == "false") {
+                $(this).html("暂停航班动态航班信息")
+                isFlightRefresh = true;
+                if (isFlightRefresh) {
+                    getFlightData(isFlightRefresh, bound);
+                }
+                $(this).attr('isPlay', 'true');
+            } else {
+                isFlightRefresh = false;
+                $(this).html("显示航班动态航班信息")
+                $(this).attr('isPlay', 'false');
+            }
+        })
+    }
+    /**
+     * 航班密度热力图显示
+     */
+    var flightHeatMap = function (data) {
+        var dataArr = [];
+        //遍历航班数据存储经纬度值
+        $.each(data.flight,function (i,e) {
+            var arr = [];
+            arr[0] = e.lat;
+            arr[1] = e.lon;
+            dataArr.push(arr)
+        })
+        if($.isValidObject(flightHeat)){
+            flightHeat.remove()
+        }
+        //航班密度热力图层
+        flightHeat = L.heatLayer(dataArr,{
+            radius:10,//原型半径
+            maxZoom:7,//最大缩放
+            gradient:{
+                0:'#FFFFFF',
+                0.1:'rgb(1, 160, 246)',
+                0.2:'#7F95E6',
+                0.3:'rgb(1,144,0)',
+                0.4:'#F6FD01',
+                0.5:'#EF8C07',
+                0.7:'#FE0409',
+                1:'rgb(214,0,0)'
+            }//渐变色
+        }).addTo(mainMap);
+    }
+    /**
+     * 初始化滑动栏
+     */
+    var initSlider = function () {
+        $('.switch-panel').on('click', function () {
+            switchSlider()
+        })
+    }
+    /**
+     * 切换滑动栏
+     */
+    var switchSlider = function () {
+        if ($('.switch-panel').hasClass('glyphicon-arrow-right')) {
+            $('.switch-panel').removeClass('glyphicon-arrow-right')
+            $('.switch-panel').addClass('glyphicon-arrow-left')
+            $("#main").animate({
+                width: '100%'
+            }, 'slow');
+            $(".board").animate({
+                right: '-20%'
+            }, 'slow')
+        } else {
+            $('.switch-panel').removeClass('glyphicon-arrow-left')
+            $('.switch-panel').addClass('glyphicon-arrow-right')
+            $("#main").animate({
+                width: '80%'
+            }, 'slow');
+            $(".board").animate({
+                right: '0%'
+            }, 'slow')
+        }
+    }
+    // 气象数据显示暂时屏蔽
+    //风向图层
+    var velocityLayer = L.velocityLayer({
+        displayValues: true,
+        displayOptions: {
+            velocityType: '亚洲风向数据展示',
+            displayPosition: 'topleft',
+            displayEmptyString: 'No wind data'
+        },
+        colorScale: ["rgb(36,104, 180)", "rgb(60,157, 194)", "rgb(128,205,193 )", "rgb(151,218,168 )", "rgb(198,231,181)", "rgb(238,247,217)", "rgb(255,238,159)", "rgb(252,217,125)", "rgb(255,182,100)", "rgb(252,150,75)", "rgb(250,112,52)", "rgb(245,64,32)", "rgb(237,45,28)", "rgb(220,24,32)", "rgb(180,0,35)"],
+        data: wind,//grib2风向数据
+        maxVelocity: 15
+    });
+    //雷达回波云层图层
+    $.ajax({
+        url: 'http://192.168.243.41:8286/AIRPORT/HeatData',
+        type: "GET",
+        success: function (data) {
+            var arr = [];
+            $.each(data.heat, function (index, e) {
+                var obj = [];
+                obj['lat'] = e.lat;
+                obj['lon'] = e.lon;
+                obj["grade"] = e.grade;
+                arr.push(obj);
+            })
+            var heatData = {
+                'max':100,
+                'data':arr
+            }
+            heatmapLayer.setData(heatData);
+        }
+    })
     return {
         init: function () {
             setLayerControl();
-            getFlightData(isFlightRefresh,bound);
+            initDatePicke();
+            intitPlay();
+            initSlider();
+            getFlightData(true, bound);
         },
-        mainMaps:mainMap
+        mainMaps: mainMap
     }
 })();
 $(document).ready(function () {
