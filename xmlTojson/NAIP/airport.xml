@@ -353,7 +353,7 @@
   </airport>
   <airport>
     <id>36</id>
-    <name>包头</name>
+    <name>包头/东河</name>
     <identifier>ZBOW</identifier>
     <latitude>403333</latitude>
     <longitude>1095954</longitude>
@@ -1043,10 +1043,10 @@
   </airport>
   <airport>
     <id>106</id>
-    <name>泸州/蓝田</name>
+    <name>泸州/云龙</name>
     <identifier>ZULZ</identifier>
-    <latitude>285109</latitude>
-    <longitude>1052333</longitude>
+    <latitude>290150</latitude>
+    <longitude>1052808</longitude>
     <type>军民合用机场</type>
     <breaueName/>
     <firId>8</firId>
@@ -2947,6 +2947,36 @@
     <identifier>ZLLN</identifier>
     <latitude>334724</latitude>
     <longitude>1054720</longitude>
+    <type>民用机场</type>
+    <breaueName/>
+    <firId>6</firId>
+  </airport>
+  <airport>
+    <id>4243</id>
+    <name>信阳/明港</name>
+    <identifier>ZHXY</identifier>
+    <latitude>323227</latitude>
+    <longitude>1140445</longitude>
+    <type>军民合用机场</type>
+    <breaueName/>
+    <firId>5</firId>
+  </airport>
+  <airport>
+    <id>4262</id>
+    <name>泸州</name>
+    <identifier>ZULU</identifier>
+    <latitude>290150</latitude>
+    <longitude>1052808</longitude>
+    <type>军民合用机场</type>
+    <breaueName/>
+    <firId>8</firId>
+  </airport>
+  <airport>
+    <id>1004282</id>
+    <name>海北/祁连</name>
+    <identifier>ZLHB</identifier>
+    <latitude>380030</latitude>
+    <longitude>1003841</longitude>
     <type>民用机场</type>
     <breaueName/>
     <firId>6</firId>

@@ -8,22 +8,27 @@ var initMap = (function () {
     var flyTimer; //航班定时器
     var layersId;
     var mainMap = L.map("main", {
-        // crs: L.CRS.EPSG900913,
-        minZoom: 3,
+        minZoom: 3,//设置最小缩放等级
         maxBounds: [
             [82.69865866056999, 272.28515625000006],
             [-8.754794702435618, -65.21484375000001]
-        ]
+        ],//设置缩放范围
     });
-    //设置地图中心视角
-    mainMap.setView([30.578333, 103.946944], 4);
-    //绑定地图缩放事件
+    //添加比例尺显示(海里)
+    mainMap.addControl(new L.Control.ScaleNautic({
+        metric: false,//km
+        imperial: false,//英里
+        nautic: true//海里
+    }));
+//设置地图中心视角
+    mainMap.setView([40.072222, 116.597222], 13);
+//绑定地图缩放事件
     var bound = {
         northEast: mainMap.getBounds()['_northEast'],
         southWest: mainMap.getBounds()['_southWest'],
         mapZoomNum: mainMap.getZoom() //当前视图范围以及缩放等级
     };
-    //地图缩放事件
+//地图缩放事件
     mainMap.on("zoomend", function () {
         // 更新边界数据
         bound = {
@@ -36,11 +41,11 @@ var initMap = (function () {
         // getFlightData(false,bound)
         console.log(bound)
         console.log(mapZoomNum)
-        if(mapZoomNum>=7){
+        if (mapZoomNum >= 7) {
             heatmapLayer.cfg.radius = 0.01;
-        }else if(mapZoomNum<=3){
+        } else if (mapZoomNum <= 3) {
             heatmapLayer.cfg.radius = 0.08;
-        }else{
+        } else {
             heatmapLayer.cfg.radius = 0.04;
         }
     })
@@ -69,7 +74,7 @@ var initMap = (function () {
         maxOpacity: 0.9,        //设置最大的不透明度
         minOpacity: 0.3,     //设置最小的不透明度
         scaleRadius: true,      //设置热力点是否平滑过渡
-        // blur: 0.95,             //系数越高，渐变越平滑，默认是0.85,
+        blur: 0.95,             //系数越高，渐变越平滑，默认是0.85,
         useLocalExtrema: true,  //使用局部极值
         latField: 'lat',//纬度
         valueField: 'grade',//热力点值
@@ -116,6 +121,7 @@ var initMap = (function () {
                 // fillOpacity:1
             };
         }
+
     }).addTo(mainMap);
     //边境地图
     var border3 = L.geoJSON(bd3, {
@@ -258,7 +264,7 @@ var initMap = (function () {
      * 获取飞行航班数据
      * @param isFlightRefresh
      */
-    var flightHeat
+    var flightHeat;
     var getFlightData = function (isFlightRefresh, lonData) {
         //json化参数
         var dataReusult = JSON.stringify(lonData);
@@ -286,7 +292,7 @@ var initMap = (function () {
                         // 绘制跑道到末端距离
                         distanceArr = flightMove.drawRunwayStatus(data.flight, mainMap, AipMap.layersGroup.runwayMap).rwyDistanceArr;
                         //绘制航班热力图显示
-                        // flightHeatMap(data);
+                        // flightHeatMap(data)
                         //开启定时
                         if (isFlightRefresh) {
                             startTimer(getFlightData, isFlightRefresh, bound, refreshTime, flyTimer);
@@ -359,31 +365,36 @@ var initMap = (function () {
      */
     var flightHeatMap = function (data) {
         var dataArr = [];
-        //遍历航班数据存储经纬度值
-        $.each(data.flight,function (i,e) {
+        // 遍历航班数据存储经纬度值
+        if ($.isValidObject(flightHeat)) {
+            flightHeat.remove()
+            dataArr = [];
+        }
+        $.each(data.flight, function (i, e) {
             var arr = [];
             arr[0] = e.lat;
             arr[1] = e.lon;
             dataArr.push(arr)
         })
-        if($.isValidObject(flightHeat)){
-            flightHeat.remove()
-        }
-        //航班密度热力图层
-        flightHeat = L.heatLayer(dataArr,{
-            radius:10,//原型半径
-            maxZoom:7,//最大缩放
-            gradient:{
-                0:'#FFFFFF',
-                0.1:'rgb(1, 160, 246)',
-                0.2:'#7F95E6',
-                0.3:'rgb(1,144,0)',
-                0.4:'#F6FD01',
-                0.5:'#EF8C07',
-                0.7:'#FE0409',
-                1:'rgb(214,0,0)'
+        var flightOption = {
+            radius: 8,//圆形半径
+            maxZoom: 7,//最大缩放
+            blur: 7,//模糊半径
+            gradient: {
+                0: '#FFFFFF',
+                0.1: '#01A0F6',
+                0.2: '#7F95E6',
+                0.3: '#018C00',
+                0.4: '#F6FD01',
+                0.5: '#EF8C07',
+                0.6: '#EF8C07',
+                0.7: '#EF8C07',
+                0.8: '#EF8C07',
+                0.9: '#FF0000',
+                1: '#FF0000'
             }//渐变色
-        }).addTo(mainMap);
+        }
+        flightHeat = L.heatLayer(dataArr, flightOption).addTo(mainMap);
     }
     /**
      * 初始化滑动栏
@@ -417,7 +428,6 @@ var initMap = (function () {
             }, 'slow')
         }
     }
-    // 气象数据显示暂时屏蔽
     //风向图层
     var velocityLayer = L.velocityLayer({
         displayValues: true,
@@ -437,15 +447,15 @@ var initMap = (function () {
         success: function (data) {
             var arr = [];
             $.each(data.heat, function (index, e) {
-                var obj = [];
+                var obj = {};
                 obj['lat'] = e.lat;
                 obj['lon'] = e.lon;
                 obj["grade"] = e.grade;
                 arr.push(obj);
             })
             var heatData = {
-                'max':100,
-                'data':arr
+                'max': 100,
+                'data': arr
             }
             heatmapLayer.setData(heatData);
         }
@@ -460,7 +470,8 @@ var initMap = (function () {
         },
         mainMaps: mainMap
     }
-})();
+})
+();
 $(document).ready(function () {
     initMap.init();
 })
