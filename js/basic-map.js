@@ -1,14 +1,21 @@
 var initMap = (function () {
-    var ipHost = "http://192.168.243.41:7070/geoserver/gwc/service/wms";
-    var flightIphost = "http://192.168.243.41:8286/AIRPORT/FlightDynamicData"; //航班数据ip
+    var ipHost = "http://192.168.243.8:7070/geoserver/gwc/service/wms";
+    var flightIphost = "http://192.168.243.8:8286/AIRPORT/FlightDynamicData"; //航班数据ip
     var flightArr = []; //保存航班图层
     var distanceArr = []; //保存跑道末端距离
     var isFlightRefresh = false; //飞行航班数据是否刷新
     var refreshTime = 1000 * 4; //飞行航班数据刷新时间
+    var flightHeat; //航班密度图层
+    //航班密度图参数
+    var flightOptions = {
+        maxZoom: 5,
+        blur: 15,
+        radius: 10
+    }
     var flyTimer; //航班定时器
-    var layersId;
     var mainMap = L.map("main", {
         minZoom: 3,//设置最小缩放等级
+        // maxZoom: 10,//设置最小缩放等级
         maxBounds: [
             [82.69865866056999, 272.28515625000006],
             [-8.754794702435618, -65.21484375000001]
@@ -21,7 +28,7 @@ var initMap = (function () {
         nautic: true//海里
     }));
 //设置地图中心视角
-    mainMap.setView([40.072222, 116.597222], 13);
+    mainMap.setView([40.072222, 116.597222], 5);
 //绑定地图缩放事件
     var bound = {
         northEast: mainMap.getBounds()['_northEast'],
@@ -41,12 +48,35 @@ var initMap = (function () {
         // getFlightData(false,bound)
         console.log(bound)
         console.log(mapZoomNum)
-        if (mapZoomNum >= 7) {
-            heatmapLayer.cfg.radius = 0.01;
-        } else if (mapZoomNum <= 3) {
-            heatmapLayer.cfg.radius = 0.08;
-        } else {
-            heatmapLayer.cfg.radius = 0.04;
+        if ($.isValidObject(flightHeat)) {
+            if (mapZoomNum <= 5) {
+                flightOptions.maxZoom =5
+                flightOptions.radus = getPxtoNm()
+                flightHeat.setOptions({
+                    maxZoom: 5,
+                    radius: getPxtoNm()
+                });
+            } else if (mapZoomNum > 5 && mapZoomNum < 8) {
+                flightOptions.maxZoom = 9
+                flightHeat.setOptions({
+                    maxZoom: 9,
+                    radius: getPxtoNm()
+                });
+            } else if (mapZoomNum >= 8 && mapZoomNum < 12) {
+                flightOptions.maxZoom = 11
+                flightOptions.radus = getPxtoNm()
+                flightHeat.setOptions({
+                    maxZoom: 11,
+                    radius: getPxtoNm()
+                });
+            } else if (mapZoomNum >= 12) {
+                flightOptions.maxZoom = 15
+                flightOptions.radus = getPxtoNm()
+                flightHeat.setOptions({
+                    maxZoom: 15,
+                    radius: getPxtoNm()
+                });
+            }
         }
     })
     //绑定地图拖拽事件
@@ -99,7 +129,7 @@ var initMap = (function () {
         }//热力图颜色值
     }
     //初始化雷达回拨图层
-    var heatmapLayer = new HeatmapOverlay(config);
+    // var heatmapLayer = new HeatmapOverlay(config);
     //中国轮廓图
     var chinaBorder = L.geoJSON(china, {
         style: function (feature) {
@@ -236,7 +266,7 @@ var initMap = (function () {
         layerControl.addOverlay(layers.runwayMap, "跑道");
         layerControl.addOverlay(layers.airpointMap, "机场");
         layerControl.addOverlay(velocityLayer, "风向图");
-        layerControl.addOverlay(heatmapLayer, "云图");
+        // layerControl.addOverlay(heatmapLayer, "云图");
         layerControl.addOverlay(layers.accMap, "管制区");
         layerControl.addOverlay(layers.appsectorMap, "进近扇区");
         layerControl.addOverlay(layers.appterMap, "进近终端区");
@@ -264,13 +294,12 @@ var initMap = (function () {
      * 获取飞行航班数据
      * @param isFlightRefresh
      */
-    var flightHeat;
     var getFlightData = function (isFlightRefresh, lonData) {
         //json化参数
         var dataReusult = JSON.stringify(lonData);
         $.ajax({
             url: flightIphost,
-            type: "post",
+            type: "POST",
             data: {
                 str: dataReusult
             },
@@ -278,21 +307,22 @@ var initMap = (function () {
                 if ($.isValidObject(data) && data.status == 200) {
                     if ($.isValidObject(data.flight)) {
                         // 移除上次绘制图层
-                        if (flightArr.length > 0) {
-                            // 移除上次绘制航班图层
-                            flightMove.removeFlight(flightArr, distanceArr, mainMap);
-                            // 移除上次绘制跑道样式图层
-                            flightMove.removeRunwayStyle(AipMap.layersGroup.runwayMap)
-                            //数据置空
-                            flightArr = [];
-                            distanceArr = [];
-                        }
-                        // 绘制航班图层
-                        flightArr = flightMove.drawFlight(data.flight, mainMap).unFlyFlightArr;
-                        // 绘制跑道到末端距离
-                        distanceArr = flightMove.drawRunwayStatus(data.flight, mainMap, AipMap.layersGroup.runwayMap).rwyDistanceArr;
+                        // if (flightArr.length > 0) {
+                        //     // 移除上次绘制航班图层
+                        //     flightMove.removeFlight(flightArr, distanceArr, mainMap);
+                        //     mainMap.flightLayers.clearLayers();
+                        //     // 移除上次绘制跑道样式图层
+                        //     flightMove.removeRunwayStyle(AipMap.layersGroup.runwayMap)
+                        //     //数据置空
+                        //     flightArr = [];
+                        //     distanceArr = [];
+                        // }
+                        // // 绘制航班图层
+                        // flightArr = flightMove.drawFlight(data.flight, mainMap).unFlyFlightArr;
+                        // // 绘制跑道到末端距离
+                        // distanceArr = flightMove.drawRunwayStatus(data.flight, mainMap, AipMap.layersGroup.runwayMap).rwyDistanceArr;
                         //绘制航班热力图显示
-                        // flightHeatMap(data)
+                        flightHeatMap(data)
                         //开启定时
                         if (isFlightRefresh) {
                             startTimer(getFlightData, isFlightRefresh, bound, refreshTime, flyTimer);
@@ -310,7 +340,14 @@ var initMap = (function () {
             }
         })
     }
-
+    /**
+     * 获取10海里对应的像素值
+     * @returns {number}
+     */
+    var getPxtoNm = function () {
+        var num = 5 * parseInt($('.leaflet-control-scale-line').outerWidth()) / $('.leaflet-control-scale-line').html().split('nm')[0] * 1;
+        return num
+    }
     /**
      * 初始化时间选择器
      */
@@ -371,30 +408,31 @@ var initMap = (function () {
             dataArr = [];
         }
         $.each(data.flight, function (i, e) {
-            var arr = [];
-            arr[0] = e.lat;
-            arr[1] = e.lon;
-            dataArr.push(arr)
+            if (e.height * 1 >= 50) {
+                var arr = [];
+                arr[0] = e.lat;
+                arr[1] = e.lon;
+                dataArr.push(arr)
+            }
         })
+        flightOptions.radus = getPxtoNm()
         var flightOption = {
-            radius: 8,//圆形半径
-            maxZoom: 7,//最大缩放
-            blur: 7,//模糊半径
+            radius: flightOptions.radus,//圆形半径
+            maxZoom: flightOptions.maxZoom,//最大缩放
+            blur: 15,//模糊半径
             gradient: {
                 0: '#FFFFFF',
-                0.1: '#01A0F6',
+                0.1: 'rgb(1, 160, 246)',
                 0.2: '#7F95E6',
-                0.3: '#018C00',
+                0.3: 'rgb(1,144,0)',
                 0.4: '#F6FD01',
                 0.5: '#EF8C07',
-                0.6: '#EF8C07',
-                0.7: '#EF8C07',
-                0.8: '#EF8C07',
-                0.9: '#FF0000',
-                1: '#FF0000'
+                0.7: '#FE0409',
+                1: 'rgb(214,0,0)'
             }//渐变色
         }
-        flightHeat = L.heatLayer(dataArr, flightOption).addTo(mainMap);
+        flightHeat = L.heatLayer(dataArr, flightOption);
+        var groupHeat = L.layerGroup([flightHeat]).addTo(mainMap)
     }
     /**
      * 初始化滑动栏
@@ -441,25 +479,25 @@ var initMap = (function () {
         maxVelocity: 15
     });
     //雷达回波云层图层
-    $.ajax({
-        url: 'http://192.168.243.41:8286/AIRPORT/HeatData',
-        type: "GET",
-        success: function (data) {
-            var arr = [];
-            $.each(data.heat, function (index, e) {
-                var obj = {};
-                obj['lat'] = e.lat;
-                obj['lon'] = e.lon;
-                obj["grade"] = e.grade;
-                arr.push(obj);
-            })
-            var heatData = {
-                'max': 100,
-                'data': arr
-            }
-            heatmapLayer.setData(heatData);
-        }
-    })
+    // $.ajax({
+    //     url: 'http://192.168.243.41:8286/AIRPORT/HeatData',
+    //     type: "GET",
+    //     success: function (data) {
+    //         var arr = [];
+    //         $.each(data.heat, function (index, e) {
+    //             var obj = {};
+    //             obj['lat'] = e.lat;
+    //             obj['lon'] = e.lon;
+    //             obj["grade"] = e.grade;
+    //             arr.push(obj);
+    //         })
+    //         var heatData = {
+    //             'max': 100,
+    //             'data': arr
+    //         }
+    //         // heatmapLayer.setData(heatData);
+    //     }
+    // })
     return {
         init: function () {
             setLayerControl();

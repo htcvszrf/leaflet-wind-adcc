@@ -5,7 +5,7 @@ var AipMap = function () {
     //定义图层对象
     var layersGroup = {};
     //定义获取瓦片ip
-    var ipHost = 'http://192.168.243.41:7070/geoserver/gwc/service/wms';
+    var ipHost = 'http://192.168.243.8:7070/geoserver/gwc/service/wms';
 
     //扇区
     var secMap = L.geoJSON(sector, {

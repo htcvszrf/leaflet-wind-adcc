@@ -27,6 +27,7 @@ var flightMove = function () {
                 //初始化飞行航班
                 flightCircle = L.marker([flightObj.lat*1, flightObj.lon*1], {
                     icon: flightIcon,
+                    zIndexOffset:1,
                     rotationAngle: flightObj.direction*1,//旋转角度
                     rotationOrigin: 'center center'//旋转中心轴
                 });
@@ -86,10 +87,13 @@ var flightMove = function () {
                 this.closePopup();
             })
             //添加到主图上
-            flightCircle.addTo(mainMap)
+            // flightCircle.addTo(mainMap);
             flyFlightArr.push(flightCircle);
         }
-
+        var flightLayers = L.layerGroup(flyFlightArr)
+        mainMap.flightLayers = flightLayers;
+        flightLayers.addTo(mainMap);
+        flightLayers.setZIndex(-1);
         return {
             unFlyFlightArr: flyFlightArr,
 
